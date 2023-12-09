@@ -1,34 +1,44 @@
 import {useEffect, useState} from "react";
-import axios from "axios";
-import {Navigate} from "react-router-dom";
 
-export const Home = () => {
-    const [message, setMessage] = useState('');
+// import components
+import Header from '../homepage/components/Header';
+import Hero from '../homepage/components/Hero';
+import Overview from '../homepage/components/Overview';
+import Brands from '../homepage/components/Brands'
+import Feature1 from '../homepage/components/Feature1'
+import Feature2 from '../homepage/components/Feature2'
+import Feature3 from '../homepage/components/Feature3'
+import Product from '../homepage/components/Product'
+import Pricing from '../homepage/components/Pricing'
+import Testimonials from '../homepage/components/Testimonials'
+import Cta from '../homepage/components/Cta'
+import Footer from '../homepage/components/Footer'
 
-    useEffect(() => {
-        if(localStorage.getItem('access_token') === null){
-            window.location.href = '/login'  
-        }
-        else{
-            (async () => {
-            try {
-                const {data} = await axios.get('http://127.0.0.1:8000/auth/login/', {
-                headers: {
-                  'Content-Type': 'application/json',
-                }
-              });
+import Aos from 'aos'
+import 'aos/dist/aos.css'
+import '../homepage/index.css';
 
-              setMessage(data.message);
-            } catch (e) {
-                console.log('not auth')
-            }
-        })()};
-    }, []);
-
-
-
-    return <div className="form-signin mt-5 text-center">
-        <h3>Hi {message}</h3>
-        
+const Home = () => {
+    // initialize aos
+    Aos.init({
+      duration: 1800,
+      offset: 100,
+    })
+  return (
+    <div className='overflow-hidden'>
+      <Header />
+      <Hero />
+      <Overview />
+      <Feature1 />
+      <Feature2 />
+      <Feature3 />
+      <Product />
+      <Testimonials />
+      <Cta />
+      <Footer />
+      <div className='h-[4000px]'></div>
     </div>
+  );
 }
+
+export default Home;
