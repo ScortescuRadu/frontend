@@ -6,18 +6,18 @@ const Nav = ({ isLoggedIn }) => {
       <ul className='flex gap-x-10'>
         {/* Other navigation items */}
         <li>
-          <a className='hover:text-accent transition a' href='/home'>
-            Home
+          <a className='hover:text-accent transition a' href='/nes'>
+            News
           </a>
         </li>
         <li>
-          <a className='hover:text-accent transition a' href='/about'>
-            About
+          <a className='hover:text-accent transition a' href='/map-finder'>
+            Map Finder
           </a>
         </li>
         <li>
-          <a className='hover:text-accent transition a' href='/contact'>
-            Contact
+          <a className='hover:text-accent transition a' href='/get-started'>
+            Get started
           </a>
         </li>
 
