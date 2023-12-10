@@ -4,7 +4,6 @@ import Login from "./component/login";
 import Home from "./component/Home";
 import {Navigation} from './component/navigation';
 import {Logout} from './component/logout';
-import Navbar from "./component/Navbar";
 
 // <Navbar/>
 

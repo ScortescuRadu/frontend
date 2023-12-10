@@ -57,4 +57,10 @@
   .btn-link {
     @apply text-accent text-xl lg:text-2xl;
   }
+  .a {
+    @apply h-[60px] px-[16px] text-lg font-normal;
+  }
+  .font-link {
+    font-family: 'Hanalei Fill', cursive;
+  }
 }

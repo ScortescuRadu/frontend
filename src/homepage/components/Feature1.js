@@ -2,11 +2,14 @@ import React from 'react';
 //import data
 import { features } from '../data'
 const Feature1 = () => {
+  const sectionStyle = {
+    backgroundColor: '#f5eccd',
+  };
   // destructure features
   const { feature1 } = features
   // destructure feature1
   const {pretitle, title, subtitle, btnLink, btnIcon, image} = feature1
-  return <section className='section'>
+  return <section className='section' style={sectionStyle}>
     <div className='container mx-auto'>
       <div className='flex flex-col lg:flex-row
       lg:itemcenter lg:gap-x-[30px]'>

@@ -14,7 +14,7 @@ const Cards = () => {
       lg:gap-x-[30px]'>
       {cards.map((card, cardIndex) => {
         // destructure card
-        const {icon, title, subtitle, delay} = card
+        const {icon, title, subtitle/*, delay*/} = card
         return(
           <div key={cardIndex}
             data-aos='zoom-out'
@@ -37,7 +37,7 @@ const Cards = () => {
               <div className='mb-3 text-[30px]
                 font-medium'>{title}</div>
               <p className='mb-6 text-light'>{subtitle}</p>
-              {index === cardIndex && <img src={ArrowImg} />}
+              {index === cardIndex && <img src={ArrowImg} alt=''/>}
             </div>
           </div>
         )

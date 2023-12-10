@@ -1,23 +1,37 @@
 import React from 'react';
-// import data
-import {nav} from '../data'
 
-const Nav = () => {
-  return(
+const Nav = ({ isLoggedIn }) => {
+  return (
     <nav>
       <ul className='flex gap-x-10'>
-        {nav.map((item, index) => {
-          // destructure item
-          const { href, name } = item
-          return (
-            <li key={index}>
-              <a className='hover:text-accent transition' href={href}>{name}</a>
-            </li>
-          )
-        })}
+        {/* Other navigation items */}
+        <li>
+          <a className='hover:text-accent transition a' href='/home'>
+            Home
+          </a>
+        </li>
+        <li>
+          <a className='hover:text-accent transition a' href='/about'>
+            About
+          </a>
+        </li>
+        <li>
+          <a className='hover:text-accent transition a' href='/contact'>
+            Contact
+          </a>
+        </li>
+
+        {/* Conditionally render "My Park" based on login status */}
+        {isLoggedIn && (
+          <li>
+            <a className='hover:text-accent transition a' href='/my-park'>
+              My Park
+            </a>
+          </li>
+        )}
       </ul>
     </nav>
-  )
+  );
 };
 
 export default Nav;

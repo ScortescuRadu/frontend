@@ -5,10 +5,14 @@ import {} from 'react-icons/hi';
 import { HiOutlineChevronDown } from 'react-icons/hi';
 
 const Hero = () => {
+  const sectionStyle = {
+    backgroundColor: '#f5eccd',
+  };
+
   // destructure hero data
   const {title, subtitle, btnText, compText, image} = hero;
   return(
-    <section className='min-h-[900px] py-12'>
+    <section className='min-h-[900px] py-12' style={sectionStyle}>
       <div className='container mx-auto min-h-[900px] flex justify-center items-center'>
         <div className='flex flex-col lg:gap-x-[30px] gap-y-8 lg:gap-y-0
         lg:flex-row items-center justify-center text-center lg:text-left'

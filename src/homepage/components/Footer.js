@@ -1,85 +1,44 @@
-import React from 'react';
-// import data
-import {footer} from '../data'
-// import components
-import Copyright from '../components/Copyright'
+import React from 'react'
+import Footer from '../../footer/footer'
+import Icon from '../../footer/icons'
 
-const Footer = () => {
-  // destructure footer data
-  const {logo, links, legal, newsletter, form} = footer
-  return (
-  <footer className='pt-[142px] pb-[60px]'>
-    <div className='container mx-auto'>
-      <div className='flex flex-col items-center text-center
-      lg:flex-row lg:items-start lg:text-left
-      lg:justify gap-y-8'>
-        <div data-aos='fade-up' data-aos-offset='200'
-          data-aos-delay='300'>
-          <img src={logo} alt='' />
-        </div>
-        <div data-aos='fade-up' data-aos-offset='200'
-          data-aos-delay='500'>
-          <div className='text-2x1 uppercase font-medium
-          mb-6'>Links</div>
-          <ul className='flex flex-col gap-y-3'>
-            {links.map((item, index) => {
-              const {href, name} = item
-              return(
-                <li key={index}>
-                  <a className='font-medium hover:text-accent transition'
-                  href={href}>
-                    {name}</a>
-                </li>
-              )
-            })}
-          </ul>
-          </div>
-        <div data-aos='fade-up' data-aos-offset='200'
-        data-aos-delay='700'
-        className='text-2x1 uppercase font-medium mb-6'
-        >Legal</div>
-          <ul className='flex flex-col gap-y-3'>
-            {links.map((item, index) => {
-              const {href, name} = item
-              return(
-                <li key={index}>
-                  <a className='font-medium hover:text-accent transition'
-                  href={href}>
-                    {name}</a>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-        <div>
-          <div className='text-2x1 uppercase font-medium mb-6'
-          >{newsletter.title}</div>
-          <div className='text-x1 text-light mb-[118px]'>
-            {newsletter.subtitle}</div>
-          <form className='max-w-[349px]
-          mb-[10px]'>
-            <div className='h-[62px] p-[7px] flex border
-            border-dark rounded-1g'>
-              <input
-                className='w-full h-full pl-6 border-none
-                outline-none placeholder:text-dark'
-                type="text"
-                placeholder={
-                form.placeholder}
-              />
-              <button className='btn btn-sm
-                bg-accent hover:bg-accentHover w-[102px]
-                text-white'
-              >{form.btnText}</button>
-            </div>
-          </form>
-          <span className='text-sm textlight'>
-            {form.smallText}
-          </span>
-        </div>
-      </div>
-    </footer>
-  )
-};
-
-export default Footer;
+export function FooterContainer() {
+    return (
+        <Footer style={
+          {
+           border: '2px solid black'
+          }}>
+            <Footer.Wrapper>
+            <Footer.Row>
+                <Footer.Column>
+                <Footer.Title>About Us</Footer.Title>
+                    <Footer.Link href="#">Story</Footer.Link>
+                    <Footer.Link href="#">Clients</Footer.Link>
+                    <Footer.Link href="#">Testimonials</Footer.Link>
+                </Footer.Column>
+                <Footer.Column>
+                <Footer.Title>Services</Footer.Title>
+                    <Footer.Link href="#">Marketing</Footer.Link>
+                    <Footer.Link href="#">Consulting</Footer.Link>
+                    <Footer.Link href="#">Development</Footer.Link>
+                    <Footer.Link href="#">Design</Footer.Link>
+                </Footer.Column>
+                <Footer.Column>
+                <Footer.Title>Contact Us</Footer.Title>
+                    <Footer.Link href="#">United States</Footer.Link>
+                    <Footer.Link href="#">United Kingdom</Footer.Link>
+                    <Footer.Link href="#">Australia</Footer.Link>
+                    <Footer.Link href="#">Support</Footer.Link>
+                </Footer.Column>
+                <Footer.Column>
+                <Footer.Title>Social</Footer.Title>
+                    <Footer.Link href="#"><Icon className="fab fa-facebook-f" />Facebook</Footer.Link>
+                    <Footer.Link href="#"><Icon className="fab fa-instagram" />Instagram</Footer.Link>
+                    <Footer.Link href="#"><Icon className="fab fa-youtube" />Youtube</Footer.Link>
+                    <Footer.Link href="#"><Icon className="fab fa-twitter" />Twitter</Footer.Link>
+                </Footer.Column>
+            </Footer.Row>
+            </Footer.Wrapper>
+        </Footer>
+    )
+}

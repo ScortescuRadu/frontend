@@ -1,5 +1,3 @@
-import Nav from 'react-bootstrap/Nav';
-import Navbar from 'react-bootstrap/Navbar';
 import React, { useState, useEffect} from 'react';
 
 export function Navigation() {
