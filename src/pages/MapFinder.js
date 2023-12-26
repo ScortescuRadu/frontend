@@ -16,7 +16,9 @@ const Home = () => {
     <div className='overflow-hidden flex flex-col min-h-screen'>
       <StaticHeader />
       <div className='flex-grow'></div>
-      <MapPage />
+      <div className='mt-20'>
+        <MapPage/>
+      </div>
       <FooterContainer />
     </div>
   );

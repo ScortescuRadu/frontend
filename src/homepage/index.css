@@ -60,7 +60,7 @@
   .a {
     @apply h-[60px] px-[16px] text-lg font-normal;
   }
-  .font-link {
+  /* .font-link {
     font-family: 'Hanalei Fill', cursive;
-  }
+  } */
 }

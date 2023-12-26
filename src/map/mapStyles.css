@@ -1,0 +1,65 @@
+.places-container {
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    width: '300px';
+}
+.map-container {
+    width: 100%;
+    height: 90vh;
+}
+.combobox-input{
+    width: 100%;
+    padding: 0.5rem;
+}
+.options-container {
+    display: flex;
+    justify-content: flex-start; /* Align items to the right by default */
+    height: 90vh;
+  }
+  
+@media (max-width: 768px) {
+    /* Adjust styles for smaller screens */
+    .options-container {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .controls {
+      width: 100%;
+      order: -1
+    }
+}
+
+.controls {
+    width: 20%;
+    padding: 1rem;
+    background: #14161a;
+    color: #fff !important;
+    font-size: 1.5rem;
+    font-weight: bold;
+    justify-content: center; /* Center content horizontally */
+    align-items: center; /* Center content vertically */
+    text-align: center; /* Align text in the center */
+}
+  
+.controls input {
+    border: none;
+}
+  
+.map {
+    width: 80%;
+    height: 90vh;
+}
+  
+.highlight {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+  
+.combobox-input {
+    width: 100%;
+    padding: 0.5rem;
+}
