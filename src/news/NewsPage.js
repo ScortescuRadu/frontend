@@ -31,7 +31,7 @@ const NewsPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
-  };
+  }; 
 
   return (
     <div>
