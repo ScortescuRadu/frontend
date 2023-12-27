@@ -5,6 +5,7 @@ import Home from "./component/Home";
 import {Navigation} from './component/navigation';
 import {Logout} from './component/logout';
 import MapFinder from "./pages/MapFinder";
+import News from "./pages/News"
 
 // <Navbar/>
 
@@ -16,6 +17,7 @@ function App() {
             <Route path="/map-finder" element={<MapFinder/>}/>
             <Route path="/login" element={<Login/>}/>
             <Route path="/logout" element={<Logout/>}/>
+            <Route path="/news" element={<News/>}/>
         </Routes>
     </BrowserRouter>;
 }
