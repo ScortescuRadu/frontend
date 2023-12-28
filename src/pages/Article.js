@@ -1,12 +1,12 @@
 // import components
 import StaticHeader from './StaticHeader';
 import { FooterContainer } from '../homepage/components/Footer'
-import NewsPage from '../news/NewsPage'
+import ArticlePage from '../news/ArticlePage'
 import Aos from 'aos'
 import 'aos/dist/aos.css'
 import '../homepage/index.css';
 
-const News = () => {
+const Article = () => {
     // initialize aos
     Aos.init({
       duration: 1800,
@@ -17,11 +17,11 @@ const News = () => {
       <StaticHeader />
       <div className='flex-grow'></div>
       <div className='mt-20'>
-        <NewsPage/>
+        <ArticlePage />
       </div>
       <FooterContainer />
     </div>
   );
 }
 
-export default News;
+export default Article;

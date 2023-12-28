@@ -38,11 +38,11 @@ const StaticHeader = () => {
       return (
         <div>
           <Button
-            style={{ color: 'black', backgroundColor: 'white',
+            style={{ color: 'black', backgroundColor: 'yellow',
               marginRight: '10px', borderLeft: '2px solid black',
               borderBottom: '2px solid black' }}
             component={Link}
-            to="/"
+            to="/account"
             className='btn btn-sm btn-outline hidden lg:flex'
           >
             My Account
