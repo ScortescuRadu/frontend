@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Button, Card, CardContent, Container, TextField, Typography } from "@material-ui/core";
+import { Button, Card, CardContent, Container, TextField, Typography, Grid } from "@material-ui/core";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -38,42 +38,51 @@ const Login = () => {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
+<Container component="main" maxWidth="xs">
       <Card>
-        <CardContent>
-          <Typography component="h1" variant="h5" align="center">
-            Sign In
-          </Typography>
-          <form onSubmit={submit}>
-            <TextField
-              variant="outlined"
-              margin="normal"
-              fullWidth
-              id="username"
-              label="Username"
-              name="username"
-              autoFocus
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-            <TextField
-              variant="outlined"
-              margin="normal"
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <Button type="submit" fullWidth variant="contained" color="primary">
-              Submit
-            </Button>
-          </form>
-        </CardContent>
+        <Grid container>
+          {/* Display image on larger screens */}
+          <Grid item xs={12} sm={6}>
+            <img src="/path/to/your/image.jpg" alt="Login" style={{ width: "100%", height: "auto" }} />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <CardContent>
+              <Typography component="h1" variant="h5" align="center">
+                Sign In
+              </Typography>
+              <form onSubmit={submit}>
+                {/* Your existing form code */}
+                <TextField
+                  variant="outlined"
+                  margin="normal"
+                  fullWidth
+                  id="username"
+                  label="Username"
+                  name="username"
+                  autoFocus
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+                <TextField
+                  variant="outlined"
+                  margin="normal"
+                  fullWidth
+                  name="password"
+                  label="Password"
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <Button type="submit" fullWidth variant="contained" color="primary">
+                  Submit
+                </Button>
+              </form>
+            </CardContent>
+          </Grid>
+        </Grid>
       </Card>
     </Container>
   );

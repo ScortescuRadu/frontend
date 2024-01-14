@@ -1,6 +1,7 @@
 import './App.css';
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
-import Login from "./component/login";
+// import Login from "./component/login";
+import Login from "./pages/Login";
 import Home from "./component/Home";
 import {Navigation} from './component/navigation';
 import {Logout} from './component/logout';
