@@ -34,9 +34,19 @@ const StaticHeader = () => {
   };
 
   const renderButtons = () => {
-    if (isLoggedIn) {
+    if (!isLoggedIn) {
       return (
         <div>
+          <Button
+            style={{ color: 'black', backgroundColor: 'orange',
+              marginRight: '10px', borderLeft: '2px solid black',
+              borderBottom: '2px solid black' }}
+            component={Link}
+            to="/park-view"
+            className='btn btn-sm btn-outline hidden lg:flex'
+          >
+            ParkView
+          </Button>
           <Button
             style={{ color: 'black', backgroundColor: 'yellow',
               marginRight: '10px', borderLeft: '2px solid black',
@@ -48,7 +58,9 @@ const StaticHeader = () => {
             My Account
           </Button>
           <Button
-            color="inherit"
+            style={{ color: 'black', backgroundColor: 'red',
+            marginRight: '10px', borderLeft: '2px solid black',
+            borderBottom: '2px solid black' }}
             onClick={handleLogout}
             className='btn btn-sm btn-outline hidden lg:flex'
           >

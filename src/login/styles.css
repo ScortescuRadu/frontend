@@ -45,7 +45,7 @@ input {
     width: calc(100% - 4rem); /* Adjusted for small screens */
 }
   
-@media (min-width: 600px) {
+@media (min-width: 900px) {
     .auth-card {
       padding: 1rem;
       width: 150%;
@@ -55,12 +55,12 @@ input {
 }
 
 .text-field {
-    width: 110%; /* Set text field width to 90% */
+    width: 140%;
     margin-bottom: 1rem;
   }
   
 .submit-button {
-    width: 110%; /* Set button width to 90% */
+    width: 100%; /* Set button width to 90% */
     background: #4CAF50;
     border-radius: 8px;
     color: #fff;

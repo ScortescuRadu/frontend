@@ -9,6 +9,7 @@ import MapFinder from "./pages/MapFinder";
 import News from "./pages/News"
 import Article from "./pages/Article"
 import MyAccount from "./pages/MyAccount"
+import Park from './pages/Park';
 
 // <Navbar/>
 
@@ -23,6 +24,7 @@ function App() {
             <Route path="/news" element={<News/>}/>
             <Route path="/news/article" element={<Article/>}/>
             <Route path="/account" element={<MyAccount/>}/>
+            <Route path="/park-view" element={<Park/>}/>
         </Routes>
     </BrowserRouter>;
 }

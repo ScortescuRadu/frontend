@@ -10,65 +10,104 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState(null);
   const [showLogin, setShowLogin] = useState(true);
 
-  const isSmallScreen = useMediaQuery('(max-width:600px)');
+  const isSmallScreen = useMediaQuery('(max-width:900px)');
 
   const submit = async (e) => {
     e.preventDefault();
 
     if (showLogin) {
-      // Login form
-      const user = {
-        username: username,
-        password: password,
-      };
+        // Login form
+        const user = {
+            email: email,
+            password: password,
+        };
+    
+        try {
+            const response = await fetch('http://localhost:8000/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    email,
+                    password,
+                }),
+            });
 
-      try {
-        const { data } = await axios.post("http://127.0.0.1:8000/auth/login/", user, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+            const text = await response.text();
+            console.log('Response Text:', text);
+    
+            if (!response.ok) {
+                // Handle non-successful responses (e.g., 4xx or 5xx status codes)
+                const errorData = await response.json();
+                console.error("Login failed:", errorData);
+                setError("Invalid credentials. Please try again.");
+                return;
+            }
 
-        localStorage.clear();
-        localStorage.setItem("access_token", data.access);
-        localStorage.setItem("refresh_token", data.refresh);
-        axios.defaults.headers.common["Authorization"] = `Bearer ${data["access"]}`;
-
-        console.log(localStorage.getItem("access_token"));
-        console.log(localStorage.getItem("refresh_token"));
-        // Redirect to home page using React Router
-        navigate("/");
-      } catch (error) {
-        console.error("Login failed:", error);
-        setError("Invalid credentials. Please try again."); // Set error message
-      }
+            const data = await response.json();
+    
+            localStorage.clear();
+            localStorage.setItem("access_token", data.access);
+            localStorage.setItem("refresh_token", data.refresh);
+            axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
+    
+            console.log(localStorage.getItem("access_token"));
+            console.log(localStorage.getItem("refresh_token"));
+            // Redirect to home page using React Router
+            navigate("/");
+        } catch (error) {
+            console.error('email', email)
+            console.error('password', password)
+            console.error("Login failed:", error);
+            setError("Invalid credentials. Please try again.");
+        }
     } else {
-      // Signup form
-      if (password !== confirmPassword) {
-        setError("Passwords do not match. Please try again.");
-        return;
-      }
-
-      const user = {
-        username: username,
-        password: password,
-      };
-
-      try {
-        // Perform signup logic here
-        // ...
-
-        // For demonstration purposes, I'm just logging the user data
-        console.log("User signed up:", user);
-
-        // You can redirect the user or perform any other actions after successful signup
-      } catch (error) {
-        console.error("Signup failed:", error);
-        setError("Signup failed. Please try again."); // Set error message
-      }
+            // Signup form
+            if (password !== confirmPassword) {
+              setError("Passwords do not match. Please try again.");
+              return;
+            }
+        
+            // Password validation: at least 8 characters
+            const passwordRegex = /^.{8,}$/;
+            if (!passwordRegex.test(password)) {
+              setError("Password must have at least 8 characters.");
+              return;
+            }
+        
+            const user = {
+              username: username,
+              email: email,
+              password: password,
+            };
+        
+            try {
+              const response = await axios.post("http://127.0.0.1:8000/account/register", user, {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              });
+        
+              // Successful signup
+              console.log("User signed up:", response.data);
+              // You can redirect the user or perform any other actions after successful signup
+        
+            } catch (error) {
+              console.error("Signup failed:", error);
+              console.error('data', user)
+        
+              if (error.response && error.response.status === 400) {
+                // Bad request (validation error)
+                setError(error.response.data.detail);
+              } else {
+                // Other errors
+                setError("Signup failed. Please try again.");
+              }
+            }
     }
   };
 
@@ -88,7 +127,7 @@ const Login = () => {
       <div className="overlay">
         <Container component="main" maxWidth="md">
           <Card className={`auth-card ${isSmallScreen ? 'small-screen' : ''}`}>
-            <Grid container justify="center" alignItems="center">
+            <Grid container alignItems="center">
               <Grid item xs={12} sm={6}>
                 <img
                   src="https://33.media.tumblr.com/6bcdef3843973653c1846203d188eea9/tumblr_nl6mqsjd5w1s4fz4bo1_500.gif"
@@ -103,18 +142,33 @@ const Login = () => {
                   </Typography>
                   <form onSubmit={submit}>
                     <TextField
-                      variant="outlined"
-                      margin="normal"
-                      fullWidth
-                      id="username"
-                      label="Username"
-                      name="username"
-                      autoFocus
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      required
-                      className="text-field"
+                            variant="outlined"
+                            margin="normal"
+                            fullWidth
+                            id="email"
+                            label="Email"
+                            name="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            className="text-field"
                     />
+                    {showLogin ? null : (
+                        <TextField
+                            variant="outlined"
+                            margin="normal"
+                            fullWidth
+                            id="username"
+                            label="Username"
+                            name="username"
+                            autoFocus
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                            className="text-field"
+                        />
+                    )}
                     <TextField
                       variant="outlined"
                       margin="normal"
