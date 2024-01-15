@@ -27,41 +27,36 @@ const Login = () => {
         };
     
         try {
-            const response = await fetch('http://localhost:8000/api/login', {
+            const response = await fetch('http://localhost:8000/account/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
+                // credentials: 'include',
                 body: JSON.stringify({
                     email,
                     password,
                 }),
             });
 
-            const text = await response.text();
-            console.log('Response Text:', text);
+            const data = await response.json();
+            // const text = await response.text();
+            console.log('User session jwt:', data);
     
             if (!response.ok) {
                 // Handle non-successful responses (e.g., 4xx or 5xx status codes)
-                const errorData = await response.json();
-                console.error("Login failed:", errorData);
+                const errorData = data;
+                console.error("Login failed again:", errorData);
                 setError("Invalid credentials. Please try again.");
                 return;
             }
 
-            const data = await response.json();
-    
             localStorage.clear();
-            localStorage.setItem("access_token", data.access);
-            localStorage.setItem("refresh_token", data.refresh);
-            axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
+            localStorage.setItem("access_token", data.jwt);
     
             console.log(localStorage.getItem("access_token"));
-            console.log(localStorage.getItem("refresh_token"));
+
             // Redirect to home page using React Router
             navigate("/");
         } catch (error) {
-            console.error('email', email)
-            console.error('password', password)
             console.error("Login failed:", error);
             setError("Invalid credentials. Please try again.");
         }

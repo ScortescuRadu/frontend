@@ -34,7 +34,7 @@ const StaticHeader = () => {
   };
 
   const renderButtons = () => {
-    if (!isLoggedIn) {
+    if (isLoggedIn) {
       return (
         <div>
           <Button

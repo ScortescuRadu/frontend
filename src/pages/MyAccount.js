@@ -4,6 +4,7 @@ import { FooterContainer } from '../homepage/components/Footer'
 import Aos from 'aos'
 import 'aos/dist/aos.css'
 import '../homepage/index.css';
+import MyAccountPage from '../account/MyAccount'
 
 const MyAccount = () => {
     // initialize aos
@@ -16,6 +17,7 @@ const MyAccount = () => {
       <StaticHeader />
         <div className='flex-grow'></div>
         <div className='mt-20'>
+            <MyAccountPage />
             <div>{localStorage.getItem("access_token")}</div>
         </div>
       <FooterContainer />
