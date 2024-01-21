@@ -12,11 +12,11 @@ const MyAccountPage = () => {
       const fetchUserData = async () => {
         try {
             const access_token = localStorage.getItem("access_token")
-          const response = await fetch('http://localhost:8000/account/user', {
+            const response = await fetch('http://localhost:8000/account/user', {
             method: 'POST',
             headers: {
                 "Content-Type": "application/json",
-                // 'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
+                'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
               },
             // credentials: 'include',
             body: JSON.stringify({
@@ -24,12 +24,14 @@ const MyAccountPage = () => {
             }),
           });
   
-          console.error(response.data)
-          setUserData(response.data);
+          const data = await response.json();
+
+          console.log(data)
+          setUserData(data);
           
           // Set initial form values using setValue from react-hook-form
-          Object.keys(response.data).forEach(key => {
-            setValue(key, response.data[key]);
+          Object.keys(data).forEach(key => {
+            setValue(key, data[key]);
           });
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -60,7 +62,8 @@ const MyAccountPage = () => {
       <div className='overflow-hidden flex flex-col min-h-screen'>
         {/* Display User Data */}
         <div>
-          <h2>User Information</h2>
+          <h2>User Information:</h2>
+          <h2>{userData.user}</h2>
           {/* Add more fields as needed */}
         </div>
   

@@ -35,16 +35,82 @@ const ArticlePage = () => {
 
   console.log(article.cover)
   return (
-    <Paper elevation={3}>
-      <img src={getImageUrl(article.cover)} alt={article.title} />
-      <Typography variant="h4">{article.title}</Typography>
-      <Typography variant="body1" paragraph>
-        {article.description}
-      </Typography>
-      <Typography variant="body2" color="textSecondary">
-        {article.timestamp}
-      </Typography>
-    </Paper>
+    <div>
+        <div style={{ backgroundColor: '#84a18d', color: '#fff', minHeight: '10vh', padding: '30px', border: '3px solid black' }}>
+          <Paper elevation={10} style={{ maxWidth: '1200px', padding: '20px', margin: '20px', position: 'relative', border: '3px solid black', }}>
+            <img
+              src={getImageUrl(article.cover)}
+              alt={article.title}
+              style={{ width: '100%', height: 'auto', marginBottom: '20px', borderRadius: '8px' }}
+            />
+            <div style={{flex: 1, padding: '10px', textAlign: 'center'}}>
+              <Typography variant="h4" style={{ marginBottom: '15px', fontWeight: 'bold' }}>
+                {article.title}
+              </Typography>
+              <Typography variant="caption" style={{ marginBottom: '15px', fontWeight: 'bold' }}>
+                {article.timestamp}
+              </Typography>
+            </div>
+          </Paper>
+        </div>
+        <div style={{ backgroundColor: 'pink', color: '#fff', minHeight: '10vh', padding: '30px', border: '3px solid black', }}>
+          <Typography variant="body1" paragraph style={{ maxWidth: '1200px', marginBottom: '15px' }}>
+            {article.description}
+          </Typography>
+        </div>
+        {article.cover_section_1 && (
+          <div style={{ backgroundColor: 'yellow', color: '#fff', minHeight: '10vh', padding: '30px', border: '3px solid black' }}>
+            <Paper elevation={10} style={{ maxWidth: '1200px', padding: '20px', margin: '20px', position: 'relative', border: '3px solid black' }}>
+              <img
+                src={getImageUrl(article.cover_section_1)}
+                alt={article.title}
+                style={{ width: '100%', height: 'auto', marginBottom: '20px', borderRadius: '8px' }}
+              />
+              <div style={{flex: 1, padding: '10px', textAlign: 'center'}}>
+                <Typography variant="h4" style={{ marginBottom: '15px', fontWeight: 'bold' }}>
+                  {article.subtitle_1}
+                </Typography>
+              </div>
+            </Paper>
+          </div>
+        )}
+        {article.description_1 && (
+          <div style={{ backgroundColor: 'snow', color: 'black', minHeight: '10vh', padding: '30px', border: '3px solid black', }}>
+            <Typography variant="body1" paragraph style={{ maxWidth: '1200px', marginBottom: '15px' }}>
+              {article.description_1}
+            </Typography>
+          </div>
+        )}
+        {article.cover_section_2 && (
+        <div style={{ backgroundColor: 'white', color: '#fff', minHeight: '10vh', padding: '30px', border: '3px solid black' }}>
+          <Paper elevation={10} style={{ backgroundColor: 'purple', maxWidth: '1200px', padding: '20px', margin: '20px', position: 'relative', border: '3px solid black' }}>
+            <img
+              src={getImageUrl(article.cover_section_2)}
+              alt={article.title}
+              style={{ width: '100%', height: 'auto', marginBottom: '20px', borderRadius: '8px', border: '3px solid black' }}
+            />
+            <div style={{flex: 1, padding: '10px', textAlign: 'center'}}>
+              <Typography variant="h4" style={{ marginBottom: '15px', fontWeight: 'bold' }}>
+                {article.subtitle_2}
+              </Typography>
+            </div>
+          </Paper>
+        </div>
+        )}
+        {article.description_2 && (
+          <div style={{ backgroundColor: 'grey', color: 'white', minHeight: '10vh', padding: '30px', border: '3px solid black' }}>
+            <Typography variant="body1" paragraph style={{ maxWidth: '1200px', marginBottom: '15px' }}>
+              {article.description_2}
+            </Typography>
+          </div>
+        )}
+        <div style={{ backgroundColor: 'snow', color: 'black', minHeight: '10vh', padding: '30px', border: '3px solid black', textAlign: 'center' }}>
+            <Typography variant="body1" paragraph style={{ maxWidth: '1200px', marginBottom: '15px' }}>
+              Comment Section
+            </Typography>
+        </div>
+      </div>
+    
   );
 };
 

@@ -50,7 +50,7 @@ const Login = () => {
             }
 
             localStorage.clear();
-            localStorage.setItem("access_token", data.jwt);
+            localStorage.setItem("access_token", data.token);
     
             console.log(localStorage.getItem("access_token"));
 

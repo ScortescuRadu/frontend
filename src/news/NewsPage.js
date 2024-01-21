@@ -83,11 +83,11 @@ const NewsPage = () => {
           <div style={{ height: '40px' }}/> {/* Empty div for spacing */}
           {/* <Grid container spacing={4} justifyContent="flex-start"> */}
           <Masonry
-              columns={4}
-              spacing={2}
+              columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}
               defaultHeight={450}
               defaultColumns={4}
               defaultSpacing={1}
+              spacing={{ xs: 1, sm: 2, md: 3, lg: 4 }}
           >
             {articles.map((article) => (
               <Grid item key={article.id} xs={12} sm={6} md={4} lg={3}>
