@@ -10,3 +10,18 @@
     text-align: center;
     color: #c32222; /* Set the text color to match your design */
   }
+
+.card-image {
+  width: '80%';
+  margin-top: '5%';
+  height: '30%';
+  margin: 'auto';
+  justify-content: 'center';
+  border-radius: '10px';
+}
+
+@media (min-width: 1200px) {
+    .card-class {
+      max-width: 85%;
+    }
+}

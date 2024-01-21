@@ -11,13 +11,20 @@ const MyAccountPage = () => {
       // Fetch user data when the component mounts
       const fetchUserData = async () => {
         try {
-          const response = await axios.get('http://localhost:8000/account/info', {
-            withCredentials: true, // Include cookies in the request
+            const access_token = localStorage.getItem("access_token")
+          const response = await fetch('http://localhost:8000/account/user', {
+            method: 'POST',
             headers: {
-                Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                "Content-Type": "application/json",
+                // 'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
               },
+            // credentials: 'include',
+            body: JSON.stringify({
+                token: access_token,
+            }),
           });
   
+          console.error(response.data)
           setUserData(response.data);
           
           // Set initial form values using setValue from react-hook-form
@@ -54,8 +61,6 @@ const MyAccountPage = () => {
         {/* Display User Data */}
         <div>
           <h2>User Information</h2>
-          <p>Username: {userData.username}</p>
-          <p>Email: {userData.email}</p>
           {/* Add more fields as needed */}
         </div>
   

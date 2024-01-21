@@ -35,7 +35,7 @@ const ArticlePage = () => {
 
   console.log(article.cover)
   return (
-    <Paper>
+    <Paper elevation={3}>
       <img src={getImageUrl(article.cover)} alt={article.title} />
       <Typography variant="h4">{article.title}</Typography>
       <Typography variant="body1" paragraph>
