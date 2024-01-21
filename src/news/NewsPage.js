@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardMedia, Typography, Button, Grid, Pagination } from '@mui/material';
+import Masonry from '@mui/lab/Masonry';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import './NewsPage.css'
@@ -80,7 +81,14 @@ const NewsPage = () => {
             />
           </div>
           <div style={{ height: '40px' }}/> {/* Empty div for spacing */}
-          <Grid container spacing={4} justifyContent="flex-start">
+          {/* <Grid container spacing={4} justifyContent="flex-start"> */}
+          <Masonry
+              columns={4}
+              spacing={2}
+              defaultHeight={450}
+              defaultColumns={4}
+              defaultSpacing={1}
+          >
             {articles.map((article) => (
               <Grid item key={article.id} xs={12} sm={6} md={4} lg={3}>
                 <Card
@@ -157,7 +165,8 @@ const NewsPage = () => {
                 </Card>
               </Grid>
             ))}
-          </Grid>
+          {/* </Grid> */}
+          </Masonry>
           <div style={{ textAlign: 'center', marginTop: '20px'}}>
             <Pagination
                     count={totalPages}
