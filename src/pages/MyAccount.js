@@ -19,7 +19,6 @@ const MyAccount = () => {
       <div className='flex-grow'></div>
       <div className='mt-20'>
         <MyAccountPage />
-        <div>{localStorage.getItem("access_token")}</div>
       </div>
       <FooterContainer />
     </div>

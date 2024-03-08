@@ -5,29 +5,9 @@ import Box from '@mui/material/Box';
 import AddIcon from '@mui/icons-material/Add';
 import { Link } from 'react-router-dom';
 
-const options = [
-  'Apple',
-  'Banana',
-  'Cherry',
-  'Date',
-  'Grape',
-  'Lemon',
-  'Orange',
-  'Peach',
-  'Pear',
-  'Plum',
-];
-
 const ParkingLots = () => {
-  const [selectedOption, setSelectedOption] = useState(options[0]);
-
-  useEffect(() => {
-    // Retrieve selected option from local storage on component mount
-    const storedOption = localStorage.getItem('selectedOption');
-    if (storedOption && options.includes(storedOption)) {
-      setSelectedOption(storedOption);
-    }
-  }, []);
+  const [selectedOption, setSelectedOption] = useState([]);
+  const [fetchedOptions, setFetchedOptions] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -45,6 +25,17 @@ const ParkingLots = () => {
         console.log('lots info:')
         console.log(data)
 
+        // Extract street addresses from the fetched data
+        const streetAddresses = data.map((item) => item.street_address);
+
+        // Set the fetched options in state
+        setFetchedOptions(streetAddresses);
+        // Set the default selected option to the first one, if available
+        setSelectedOption(streetAddresses[0] || '');
+
+        // Store street addresses in local storage
+        localStorage.setItem('streetAddresses', JSON.stringify(streetAddresses));
+
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
@@ -56,7 +47,7 @@ const ParkingLots = () => {
   const handleSelectChange = (event, value) => {
     // Update selected option and save to local storage
     setSelectedOption(value);
-    localStorage.setItem('selectedOption', value);
+    localStorage.setItem('selectedAddressOption', value);
   };
 
   return (
@@ -78,7 +69,7 @@ const ParkingLots = () => {
         }}
       >
         <Autocomplete
-          options={options}
+          options={fetchedOptions}
           value={selectedOption}
           onChange={handleSelectChange}
           renderInput={(params) => (
@@ -86,7 +77,7 @@ const ParkingLots = () => {
               {...params}
               variant="outlined"
               fullWidth
-              defaultValue={options[0]}
+              defaultValue={fetchedOptions[0]}
               InputProps={{
                 ...params.InputProps,
                 style: { fontSize: '16px', paddingTop: '8px', paddingBottom: '8px' },
