@@ -5,6 +5,7 @@ import Aos from 'aos'
 import 'aos/dist/aos.css'
 import '../homepage/index.css';
 import MyAccountPage from '../account/MyAccount'
+import ParkingLotInfo from '../account/ParkingLotInfo';
 
 const MyAccount = () => {
     // initialize aos
@@ -15,11 +16,11 @@ const MyAccount = () => {
   return (
     <div className='overflow-hidden flex flex-col min-h-screen'>
       <StaticHeader />
-        <div className='flex-grow'></div>
-        <div className='mt-20'>
-            <MyAccountPage />
-            <div>{localStorage.getItem("access_token")}</div>
-        </div>
+      <div className='flex-grow'></div>
+      <div className='mt-20'>
+        <MyAccountPage />
+        <div>{localStorage.getItem("access_token")}</div>
+      </div>
       <FooterContainer />
     </div>
   );

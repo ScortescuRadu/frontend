@@ -20,15 +20,6 @@ const Nav = ({ isLoggedIn }) => {
             Get started
           </a>
         </li>
-
-        {/* Conditionally render "My Park" based on login status */}
-        {isLoggedIn && (
-          <li>
-            <a className='hover:text-accent transition a' href='/my-park'>
-              My Park
-            </a>
-          </li>
-        )}
       </ul>
     </nav>
   );

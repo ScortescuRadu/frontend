@@ -5,6 +5,7 @@ import ParkView from '../camera/ParkView'
 import Aos from 'aos'
 import 'aos/dist/aos.css'
 import '../homepage/index.css';
+import ParkViewEnhanced from '../camera/ParkViewEnhanced';
 
 const ParkPage = () => {
     // initialize aos
@@ -17,7 +18,8 @@ const ParkPage = () => {
       <StaticHeader />
       <div className='flex-grow'></div>
       <div className='mt-20'>
-        <ParkView />
+        {/* <ParkView /> */}
+        <ParkViewEnhanced />
       </div>
       <FooterContainer />
     </div>

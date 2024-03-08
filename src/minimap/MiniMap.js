@@ -9,7 +9,7 @@ import { getCoordsFromAddress } from '../map/MapUtils';
 const center = { lat: 45.754364, lng: 21.226750 };
 const MAP_LIBRARIES = ['places']
 
-const MiniMap = () => {
+const MiniMap = ({ onAddressChange }) => {
     const [map, setMap] = useState(/** @type google.maps.Map */ (null))
     const [origin, setOrigin] = useState('')
     const [markers, setMarkers] = useState([]);
@@ -18,6 +18,8 @@ const MiniMap = () => {
 
     const handleOriginChange = () => {
         if (originRef.current) {
+            console.log(originRef)
+        onAddressChange(originRef)
         setOrigin(originRef.current.value);
         }
     };
@@ -31,6 +33,8 @@ const MiniMap = () => {
         if (isLoaded && map && originRef.current) {
             // Get coordinates for the specified address
             getCoordsFromAddress(originRef.current.value).then((coords) => {
+                onAddressChange(originRef.current.value)
+                console.log(originRef.current.value)
                 if (coords) {
                     // Update the map center to the specified location
                     map.panTo(coords);
