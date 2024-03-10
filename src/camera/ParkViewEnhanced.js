@@ -137,8 +137,57 @@ const ParkViewEnhanced = () => {
             .then(blob => resolve(blob));
         });
   
-        const formData = new FormData();
-        formData.append('image', imageBlob, 'current_frame.jpg');
+        const formDataImage = new FormData();
+        // console.log(formDataImage)
+        formDataImage.append('image', imageBlob, 'current_frame.jpg');
+        const response = await fetch('http://127.0.0.1:8000/spot-detection/process_image/', {
+          method: 'POST',
+          body: formDataImage,
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const taskId = result.task_id;
+
+          // Poll the Celery task status and get the result
+          const pollTaskStatus = async () => {
+              const statusResponse = await fetch(`http://127.0.0.1:8000/spot-detection/check_task_status/${taskId}/`);
+              const taskStatus = await statusResponse.json();
+
+          if (taskStatus.status === 'SUCCESS') {
+            // Image processing completed, get the bounding boxes
+            const boundingBoxes = taskStatus.result;
+
+            // Update state or perform other actions with bounding boxes
+            console.log('Bounding Boxes:', boundingBoxes);
+            setLoading(false); // Hide loading indicator
+
+            // Store bounding boxes in the database (optional)
+            // await fetch('http://your-django-backend-url/store_bounding_boxes/', {
+            //   method: 'POST',
+            //   headers: {
+            //     'Content-Type': 'application/json',
+            //   },
+            //   body: JSON.stringify({
+            //     task_id: taskId,
+            //     bounding_boxes_json: JSON.stringify(boundingBoxes),
+            //   }),
+            // });
+          } else if (taskStatus.status === 'FAILURE') {
+            console.error('Error processing image:', taskStatus.message);
+            setLoading(false); // Hide loading indicator
+          } else {
+            // Task still in progress, continue polling
+            setTimeout(pollTaskStatus, 1000);
+          }
+        };
+
+          // Start polling the task status
+          pollTaskStatus();
+        } else {
+          console.error('Error sending image to Django:', response.statusText);
+          setLoading(false); // Hide loading indicator
+        }
       }
     };
 
