@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactPlayer from 'react-player';
 import Webcam from 'react-webcam';
+import ParkingLots from '../account/ParkingLots';
+import VideoPlayer from './VideoPlayer';
 
 const ParkViewEnhanced = () => {
     const cardData = [
@@ -17,14 +19,21 @@ const ParkViewEnhanced = () => {
     const [formData, setFormData] = useState({
         cameraName: '',
         selectedCamera: '', // To store the selected camera ID
-      });
-    
-      const [connectedCameras, setConnectedCameras] = useState([]);
-    
-      useEffect(() => {
+        localVideo: null,
+    });
+    const [connectedCameras, setConnectedCameras] = useState([]);
+    /// LocalVideo
+    const [videoReady, setVideoReady] = useState(false);
+    const [showCurrentFrame, setShowCurrentFrame] = useState(false);
+    const [currentFrameImage, setCurrentFrameImage] = useState(null);
+    const playerRef = useRef(null);
+    const [loading, setLoading] = useState(false);
+    //////////////
+
+    useEffect(() => {
         // Fetch connected cameras when the component mounts
         fetchConnectedCameras();
-      }, []);
+    }, []);
     
       const fetchConnectedCameras = async () => {
         try {
@@ -47,12 +56,15 @@ const ParkViewEnhanced = () => {
         setFormData({
           selectedCamera: '',
           cameraName: '',
+          localVideo: null,
         });
+        setLoading(false);
     };
 
     const handleFormSubmit = (event) => {
         console.log('Form Data:', formData);
         setShowModal(false);
+        setLoading(false);
     };
 
     const handleInputChange = (event) => {
@@ -71,6 +83,7 @@ const ParkViewEnhanced = () => {
     };
 
     const isDataFilled = () => {
+        console.log('localVideo:', formData.localVideo)
         switch (selectedOption) {
           case 'connectedCamera':
             return formData.selectedCamera !== '';
@@ -78,6 +91,9 @@ const ParkViewEnhanced = () => {
           case 'remoteIP':
           case 'liveStream':
             return formData.cameraName !== '';
+
+          case 'localVideo':
+              return formData.localVideo !== null;
       
           default:
             return false;
@@ -88,24 +104,52 @@ const ParkViewEnhanced = () => {
         facingMode: 'environment',
       };
 
+    const handleProcessClick = () => {
+      if (playerRef.current) {
+        const currentTime = playerRef.current.getCurrentTime();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+  
+        canvas.width = playerRef.current.getInternalPlayer().videoWidth;
+        canvas.height = playerRef.current.getInternalPlayer().videoHeight;
+  
+        ctx.drawImage(playerRef.current.getInternalPlayer(), 0, 0, canvas.width, canvas.height);
+  
+        setCurrentFrameImage(canvas.toDataURL());
+        setShowCurrentFrame(!showCurrentFrame);
+        setVideoReady(!showCurrentFrame);
+      }
+    };
+
+    const handleReturnToVideoClick = () => {
+      setShowCurrentFrame(false);
+      setVideoReady(true);
+      setLoading(false);
+    };
+
+    const handleFindSpotsClick = async () => {
+      setLoading(true);
+
+      if (currentFrameImage) {
+        const imageBlob = await new Promise(resolve => {
+          fetch(currentFrameImage)
+            .then(response => response.blob())
+            .then(blob => resolve(blob));
+        });
+  
+        const formData = new FormData();
+        formData.append('image', imageBlob, 'current_frame.jpg');
+      }
+    };
+
     return (
-        <div style={{ backgroundColor: '#000', color: '#fff', minHeight: '100vh', padding: '20px' }}>
+        <div style={{ backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
+            <ParkingLots />
             <h1 style={{ marginTop: '20px', color: '#fff', fontSize: '2.5em', textAlign: 'center', textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)' }}>
                 Live Park View
             </h1>
-
             <div style={sectionTitleStyle}>
                 <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Parking Spaces</h2>
-            </div>
-
-            <div style={centeredTitleStyle}>
-                <div style={{
-                    display: 'inline-block',
-                    background: 'yellow',
-                    padding: '5px 10px',
-                }}>
-                    <h3 style={{ margin: 0 }}>Bulevardul Republicii nr.21</h3>
-                </div>
             </div>
 
             <div style={gridContainerStyle}>
@@ -123,16 +167,6 @@ const ParkViewEnhanced = () => {
 
             <div style={sectionTitleStyle}>
                 <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Entrances</h2>
-            </div>
-
-            <div style={centeredTitleStyle}>
-                <div style={{
-                    display: 'inline-block',
-                    background: 'yellow',
-                    padding: '5px 10px',
-                }}>
-                    <h3 style={{ margin: 0 }}>Bulevardul Republicii nr.21</h3>
-                </div>
             </div>
 
             <div style={gridContainerStyle}>
@@ -173,6 +207,7 @@ const ParkViewEnhanced = () => {
                     <option value="connectedCamera">Connected Camera</option>
                     <option value="remoteIP">Remote IP Address</option>
                     <option value="liveStream">Live Stream</option>
+                    <option value="localVideo">Local Video</option>
                   </select>
                 </label>
   
@@ -187,6 +222,21 @@ const ParkViewEnhanced = () => {
                         </option>
                       ))}
                     </select>
+                  </label>
+                )}
+
+                {selectedOption === 'localVideo' && (
+                  <label>
+                    Local Video File:
+                    <input
+                      type="file"
+                      name="localVideo"
+                      accept="video/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        setFormData({ ...formData, localVideo: file });
+                      }}
+                    />
                   </label>
                 )}
 
@@ -231,8 +281,83 @@ const ParkViewEnhanced = () => {
                     )}
 
                     {selectedOption === 'liveStream' && formData.cameraName && (
-                        <ReactPlayer url={formData.cameraName} playing controls width="100%" height="auto" />
+                        // <ReactPlayer url={formData.cameraName} playing controls width="100%" height="auto" />
+                        <VideoPlayer videoUrl={formData.cameraName} />
                     )}
+
+                    {selectedOption === 'localVideo' && formData.localVideo && (
+                      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                        {!showCurrentFrame ? (
+                        <ReactPlayer
+                          ref={playerRef}
+                          url={URL.createObjectURL(formData.localVideo)}
+                          width="100%"
+                          height="100%"
+                          controls={true}
+                          onReady={() => {
+                            setVideoReady(true);
+                          }}
+                        />
+                        ) : (
+                          <img
+                            src={currentFrameImage}
+                            alt="Current Frame"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        )}
+                        {showCurrentFrame && (
+                          <>
+                          {loading && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                zIndex: 1,
+                                color: 'white',
+                              }}
+                            >
+                              Loading...
+                            </div>
+                          )}
+
+                          <button
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              padding: '10px',
+                              background: 'rgba(0, 0, 0, 0.5)',
+                              color: 'white',
+                              cursor: 'pointer',
+                            }}
+                            onClick={handleFindSpotsClick}
+                          >
+                            Find Spots
+                          </button>
+                          </>
+                        )}
+                        {videoReady && (
+                          <button
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              padding: '10px',
+                              background: 'rgba(0, 0, 0, 0.5)',
+                              color: 'white',
+                              cursor: 'pointer',
+                            }}
+                            onClick={showCurrentFrame ? handleReturnToVideoClick : handleProcessClick}
+                          >
+                            {showCurrentFrame ? 'Return to video' : 'Process'}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     <div style={{ textAlign: 'center', marginTop: '10px', marginBottom: '10px' }}>
                         <button style={{color: 'red'}} onClick={handlePrevButtonClick}>
                             Prev
