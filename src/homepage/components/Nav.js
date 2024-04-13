@@ -16,8 +16,8 @@ const Nav = ({ isLoggedIn }) => {
           </a>
         </li>
         <li>
-          <a className='hover:text-accent transition a' href='/get-started'>
-            Get started
+          <a className='hover:text-accent transition a' href='/payment'>
+            Pay Parking
           </a>
         </li>
       </ul>

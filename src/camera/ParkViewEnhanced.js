@@ -3,6 +3,7 @@ import ReactPlayer from 'react-player';
 import Webcam from 'react-webcam';
 import ParkingLots from '../account/ParkingLots';
 import VideoPlayer from './VideoPlayer';
+import EntranceStream from './EntranceStream';
 
 const ParkViewEnhanced = () => {
     const cardData = [
@@ -14,6 +15,7 @@ const ParkViewEnhanced = () => {
     ];
 
     const [showModal, setShowModal] = useState(false);
+    const [entranceSetup, setEntranceSetup] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [selectedOption, setSelectedOption] = useState('');
     const [formData, setFormData] = useState({
@@ -50,6 +52,11 @@ const ParkViewEnhanced = () => {
         setShowModal(true);
     };
 
+    const handleAddEntranceCameraClick = () => {
+      setShowModal(true);
+      setEntranceSetup(true);
+    };
+
     const handleModalClose = () => {
         setShowModal(false);
         setSelectedOption('');
@@ -59,6 +66,7 @@ const ParkViewEnhanced = () => {
           localVideo: null,
         });
         setLoading(false);
+        setEntranceSetup(false);
     };
 
     const handleFormSubmit = (event) => {
@@ -219,7 +227,7 @@ const ParkViewEnhanced = () => {
             </div>
 
             <div style={gridContainerStyle}>
-                <div style={cardStyle}>
+                <div style={cardStyle} onClick={handleAddEntranceCameraClick}>
                     <div style={plusStyle}>+</div>
                     <div style={titleStyle}>Add Camera</div>
                 </div>
@@ -335,6 +343,10 @@ const ParkViewEnhanced = () => {
                     )}
 
                     {selectedOption === 'localVideo' && formData.localVideo && (
+                      <div>
+                      {entranceSetup ? (
+                        <EntranceStream videoRef={playerRef} localVideo={formData.localVideo} />
+                      ) : (
                       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                         {!showCurrentFrame ? (
                         <ReactPlayer
@@ -404,6 +416,8 @@ const ParkViewEnhanced = () => {
                             {showCurrentFrame ? 'Return to video' : 'Process'}
                           </button>
                         )}
+                      </div>
+                      )}
                       </div>
                     )}
 
