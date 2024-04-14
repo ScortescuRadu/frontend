@@ -6,6 +6,19 @@ import axios from 'axios';
 import myVideo from './assets/parking.mp4';
 import exampleImage from './assets/events.jpg';
 import ConfirmButton from './components/ConfirmButton';
+import InvoiceSelectionCard from './components/InvoiceSelectionCard';
+import { useNavigate } from 'react-router-dom';
+
+
+const fetchCsrfToken = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/account/csrf/');
+      const csrfToken = response.data.csrfToken;
+      localStorage.setItem('csrfToken', csrfToken);
+    } catch (error) {
+      console.error('Error fetching CSRF token:', error);
+    }
+};
 
 // Sample data for the images, titles, and text
 const imageData = [
@@ -90,49 +103,76 @@ const PaymentView = () => {
     const [options, setOptions] = useState([]);
     const [inputLabel, setInputLabel] = useState('Enter License Plate');
     const [isLoading, setIsLoading] = useState(false);
-    const [serverResponse, setServerResponse] = useState(null);
+    const [serverResponse, setServerResponse] = useState([]);
+    const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [errorMessage, setErrorMessage] = useState('');
     const [fallbackParkingLot, setFallbackParkingLot] = useState('');
     const [parkingLots, setParkingLots] = useState([]); // This would be fetched similar to earlier examples
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    if (alignment === 'reserve') {
-      loadParkingLots();
-    }
-  }, [alignment]);
+    useEffect(() => {
+        if (alignment === 'reserve') {
+        loadParkingLots();
+        }
+        if (!localStorage.getItem('csrfToken')) {
+            fetchCsrfToken();
+        }
+    }, [alignment]);
 
-  const loadParkingLots = async () => {
-    const response = await new Promise((resolve) => setTimeout(() => resolve(['Lot 1', 'Lot 2', 'Lot 3', 'Lot 4', 'Lot 5']), 1000));
-    setOptions(response);
-  };
+    const loadParkingLots = async () => {
+        const response = await new Promise((resolve) => setTimeout(() => resolve(['Lot 1', 'Lot 2', 'Lot 3', 'Lot 4', 'Lot 5']), 1000));
+        setOptions(response);
+    };
 
-  const handleAlignment = (event, newAlignment) => {
-    if (newAlignment !== null) {
-      setAlignment(newAlignment);
-      setInputLabel(newAlignment === 'pay' ? 'Enter License Plate' : 'Select Parking Lot');
-    }
-  };
+    const handleAlignment = (event, newAlignment) => {
+        if (newAlignment !== null) {
+        setAlignment(newAlignment);
+        setInputLabel(newAlignment === 'pay' ? 'Enter License Plate' : 'Select Parking Lot');
+        }
+    };
 
-  const handleSearchChange = (event) => {
-    setSearchValue(event.target.value);
-  };
+    const handleSearchChange = (event) => {
+        setSearchValue(event.target.value);
+    };
 
     const handleSearchClick = async () => {
         setIsLoading(true);
+        const csrfToken = localStorage.getItem('csrfToken');
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken // Include the CSRF token in request headers
+        };
+
         try {
-        const response = await axios.post('https://api.example.com/search', { licensePlate: searchValue });
-        if (response.data.status === 'ok') {
-            setServerResponse(response.data);
-            setErrorMessage('');
-        } else {
-            setErrorMessage('Could not find car, let\'s search your parking lot address:');
-            setServerResponse(null);
-            setFallbackParkingLot('');
-        }
+            const response = await axios.post('http://127.0.0.1:8000/parking-invoice/license/unpaid/', {
+              license_plate: searchValue  // Corrected from 'licensePlate' to 'license_plate'
+            }, { headers });
+    
+            // Check the response status code for success (HTTP 200 OK)
+            if (response.status === 200 && response.data.length > 0) {
+                setServerResponse(response.data);
+                setSelectedInvoice(null);
+            } else {
+              // Handle non-200 responses
+                setErrorMessage('No unpaid invoices found for this license plate.');
+                setServerResponse([]);
+            }
         } catch (error) {
-        console.error('Search request failed:', error);
-        setErrorMessage('Failed to connect to the server.');
-        setServerResponse(null);
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                console.error('Search request failed:', error.response.data);
+                setErrorMessage(`Error: ${error.response.status} - ${error.response.data.detail}`);
+            } else if (error.request) {
+                // The request was made but no response was received
+                console.error('Search request failed, no response:', error.request);
+                setErrorMessage('No response from server.');
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                console.error('Error', error.message);
+                setErrorMessage('Error sending request.');
+            }
+            setServerResponse(null);
         }
         setIsLoading(false);
     };
@@ -142,7 +182,7 @@ const PaymentView = () => {
         try {
           const response = await axios.post('https://api.example.com/fallbackSearch', { licensePlate: searchValue, parkingLot: fallbackParkingLot });
           if (response.data.status === 'ok') {
-            setServerResponse(response.data);
+            setServerResponse(response.data[0]);
             setErrorMessage('');
           } else {
             setErrorMessage('Could not process the fallback search.');
@@ -152,9 +192,18 @@ const PaymentView = () => {
           setErrorMessage('Failed to connect during fallback search.');
         }
         setIsLoading(false);
-      };
+    };
 
-  return (
+    const selectInvoice = (invoice) => {
+        setSelectedInvoice(invoice);
+    };
+
+    const confirmPayment = () => {
+        console.log('Confirming...', selectedInvoice);
+        navigate('/stripe', { state: { invoice: selectedInvoice } });
+    };
+
+    return (
     <ThemeProvider theme={theme}>
       <Box
         sx={{
@@ -170,7 +219,7 @@ const PaymentView = () => {
         <video autoPlay loop muted style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover' }}>
           <source src={myVideo} type="video/mp4" />
         </video>
-        <Paper elevation={6} sx={{ zIndex: 1 }}>
+        <Paper elevation={6} sx={{ zIndex: 1, overflow: 'auto', maxHeight: '40vh' }}>
           <ToggleButtonGroup
             color="primary"
             value={alignment}
@@ -198,9 +247,23 @@ const PaymentView = () => {
                   </InputAdornment>
                 }
               />
-              {serverResponse && (
-                <Typography sx={{ mt: 2 }}>{`Price: ${serverResponse.price}, Address: ${serverResponse.parkingLotAddress}`}</Typography>
-              )}
+                <Box sx={{ p: 2, maxHeight: '50vh', overflowY: 'auto' }}>
+                    {serverResponse.map((invoice, index) => (
+                        <InvoiceSelectionCard
+                            key={index}
+                            invoice={invoice}
+                            onSelect={selectInvoice}
+                            isSelected={selectedInvoice === invoice}
+                        />
+                    ))}
+                </Box>
+                {selectedInvoice && <ConfirmButton onClick={confirmPayment} />}
+                    {errorMessage && (
+                        <Typography color="error">{errorMessage}</Typography>
+                    )}
+                {errorMessage && (
+                    <Typography color="error" sx={{ mt: 2 }}>{errorMessage}</Typography>
+                )}
               {errorMessage && (
                 <>
                   <Typography color="error" sx={{ mt: 2 }}>{errorMessage}</Typography>

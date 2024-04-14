@@ -11,7 +11,8 @@ import Article from "./pages/Article"
 import MyAccount from "./pages/MyAccount"
 import Park from './pages/Park';
 import CreateLot from './pages/CreateLot';
-import Payment from './pages/Payment'
+import Payment from './pages/Payment';
+import StripePayment from './pages/StripePayment';
 
 // <Navbar/>
 
@@ -29,6 +30,7 @@ function App() {
             <Route path="/park-view" element={<Park/>}/>
             <Route path="/create-lot" element={<CreateLot/>}/>
             <Route path="/payment" element={<Payment/>}/>
+            <Route path="/stripe" element={<StripePayment/>}/>
         </Routes>
     </BrowserRouter>;
 }
