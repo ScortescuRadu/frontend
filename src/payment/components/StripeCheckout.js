@@ -1,23 +1,40 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
+import InvoiceDetails from './InvoiceDetails';
+import { Button } from '@mui/material';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
-const ProductDisplay = ({ handleCheckout }) => (
-  <section>
-    <div className="product">
-      <img
-        src="https://i.imgur.com/EHyR2nP.png"
-        alt="The cover of Stubborn Attachments"
+const ProductDisplay = ({ handleCheckout, invoiceData }) => (
+    <section style={{ textAlign: 'center', padding: '20px' }}>
+      <InvoiceDetails 
+        licensePlate={invoiceData.licensePlate}
+        spot={invoiceData.spot}
+        timestamp={invoiceData.timestamp}
+        price={invoiceData.price}
       />
-      <div className="description">
-        <h3>Stubborn Attachments</h3>
-        <h5>$20.00</h5>
-      </div>
-    </div>
-    <button onClick={handleCheckout} type="button">
-      Checkout
-    </button>
-  </section>
+      <Button
+        onClick={handleCheckout}
+        type="button"
+        variant="contained"
+        color="primary"
+        size="large"
+        startIcon={<ShoppingCartIcon />}
+        sx={{
+          mt: 2,
+          backgroundColor: '#000', // Use theme secondary color
+          '&:hover': {
+            backgroundColor: 'green', // Darken button on hover
+          },
+          padding: '10px 20px',
+          fontSize: '1rem' // Bigger font size for better readability
+        }}
+      >
+        Checkout
+      </Button>
+    </section>
 );
+
 
 const Message = ({ message }) => (
   <section>
@@ -36,39 +53,70 @@ const fetchCsrfToken = async () => {
 };
 
 export default function StripeCheckout() {
-  const [message, setMessage] = useState("");
+    const [message, setMessage] = useState("");
+    const location = useLocation(); // Hook to access URL location
+    const queryParams = new URLSearchParams(location.search); // Parse the query string
+    const licensePlate = queryParams.get('license');
+    const spot = queryParams.get('spot');
+    const timestamp = queryParams.get('timestamp');
+    const [invoiceData, setInvoiceData] = useState({
+        licensePlate: licensePlate || "Unknown License",
+        spot: spot || "Unknown Spot",
+        timestamp: timestamp || new Date().toISOString(),
+        price: 0.00
+    });
 
-  useEffect(() => {
-    if (!localStorage.getItem('csrfToken')) {
-        fetchCsrfToken();
-    }
+    useEffect(() => {
+        const fetchPrice = async () => {
+            const csrfToken = localStorage.getItem('csrfToken');
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            };
 
-    const query = new URLSearchParams(window.location.search);
+            try {
+                const response = await axios.post('http://127.0.0.1:8000/parking-invoice/calculate-price/', {
+                    license_plate: licensePlate,
+                    timestamp: timestamp
+                }, { headers });
 
-    if (query.get("success")) {
-      setMessage("Order placed! You will receive an email confirmation.");
-    }
+                if (response.status === 200) {
+                    setInvoiceData(currentData => ({
+                        ...currentData,
+                        price: response.data.price
+                    }));
+                } else {
+                    setMessage("Failed to calculate price. Please try again.");
+                }
+            } catch (error) {
+                console.error('Error fetching price:', error);
+                setMessage("Error fetching price from server.");
+            }
+        };
 
-    if (query.get("canceled")) {
-      setMessage("Order canceled -- continue to shop around and checkout when you're ready.");
-    }
-  }, []);
+        if (licensePlate && timestamp) {
+            fetchPrice();
+        }
+    }, [licensePlate, timestamp]);
 
   const handleCheckout = async () => {
     const csrfToken = localStorage.getItem('csrfToken');
 
     const data = {
-        price: 0.5,  // Replace with the variable or value representing the price
-        // Include any other additional data expected by your Django server if needed
-      };
+        price: invoiceData.price * 100,
+        name: `${invoiceData.licensePlate} parking time`,
+        timestamp: invoiceData.timestamp,
+        licensePlate: invoiceData.licensePlate,
+        spot: invoiceData.spot
+    };
 
     const response = await fetch("http://127.0.0.1:8000/payment/web/checkout/", {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrfToken,
-      },
-      body: JSON.stringify(data)
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify(data)
     });
 
     if (response.ok) {
@@ -83,6 +131,6 @@ export default function StripeCheckout() {
   return message ? (
     <Message message={message} />
   ) : (
-    <ProductDisplay handleCheckout={handleCheckout} />
+    <ProductDisplay handleCheckout={handleCheckout} invoiceData={invoiceData}/>
   );
 }

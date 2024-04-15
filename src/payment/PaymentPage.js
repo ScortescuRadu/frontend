@@ -107,6 +107,7 @@ const PaymentView = () => {
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [errorMessage, setErrorMessage] = useState('');
     const [fallbackParkingLot, setFallbackParkingLot] = useState('');
+    const [licensePlate, setLicensePlate] = useState('');
     const [parkingLots, setParkingLots] = useState([]); // This would be fetched similar to earlier examples
     const navigate = useNavigate();
 
@@ -137,6 +138,7 @@ const PaymentView = () => {
 
     const handleSearchClick = async () => {
         setIsLoading(true);
+        setLicensePlate(searchValue);
         const csrfToken = localStorage.getItem('csrfToken');
         const headers = {
             'Content-Type': 'application/json',
@@ -200,7 +202,14 @@ const PaymentView = () => {
 
     const confirmPayment = () => {
         console.log('Confirming...', selectedInvoice);
-        navigate('/stripe', { state: { invoice: selectedInvoice } });
+        if (selectedInvoice) {
+            const queryParams = new URLSearchParams({
+                license: licensePlate,
+                spot: selectedInvoice.spot_description,
+                timestamp: selectedInvoice.timestamp // Assuming timestamp is a string; format it if necessary
+            }).toString();
+            navigate(`/stripe?${queryParams}`);
+        }
     };
 
     return (

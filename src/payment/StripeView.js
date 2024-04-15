@@ -1,7 +1,5 @@
 import React from 'react';
 import { Box, Paper, Typography } from '@mui/material';
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import StripeCheckout from './components/StripeCheckout';
 import './StripeView.css';
 
@@ -28,13 +26,24 @@ const StripeView = () => {
                 alignItems: 'center',
                 justifyContent: 'center'
             }}>
-                <Typography variant="h6" component="h1" sx={{
-                    fontWeight: 'bold',
-                    fontSize: '24px',
-                    color: 'black',
-                    textAlign: 'center',
-                    paddingBottom: '20px'
-                }}>
+                <Typography
+                    variant="h4" // Larger variant for more impact
+                    component="h1"
+                    sx={{
+                        fontWeight: 'bold',
+                        fontSize: '2.5rem', // Increase the font size for better visibility
+                        color: 'primary.main', // Use theme's primary color to tie into the overall design
+                        textAlign: 'center',
+                        paddingTop: '20px', // Increase padding for better spacing
+                        paddingBottom: '10px',
+                        background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)', // Optional: Background gradient
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        margin: 'auto', // Centering if needed
+                        width: 'fit-content', // Fit to content width for better control
+                        display: 'inline-block' // Align background with text
+                    }}
+                    >
                     Secure Payment
                 </Typography>
                 <StripeCheckout />

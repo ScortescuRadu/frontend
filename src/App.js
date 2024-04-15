@@ -13,6 +13,8 @@ import Park from './pages/Park';
 import CreateLot from './pages/CreateLot';
 import Payment from './pages/Payment';
 import StripePayment from './pages/StripePayment';
+import StripePaymentFailure from './pages/StripePaymentFailure'
+import StripePaymentSuccess from './pages/StripePaymentSuccess'
 
 // <Navbar/>
 
@@ -31,6 +33,8 @@ function App() {
             <Route path="/create-lot" element={<CreateLot/>}/>
             <Route path="/payment" element={<Payment/>}/>
             <Route path="/stripe" element={<StripePayment/>}/>
+            <Route path="/stripe/failure" element={<StripePaymentFailure/>}/>
+            <Route path="/stripe/success" element={<StripePaymentSuccess/>}/>
         </Routes>
     </BrowserRouter>;
 }
