@@ -119,6 +119,8 @@ const PaymentView = () => {
     const [loadingCities, setLoadingCities] = useState(false);
     const [loadingAddresses, setLoadingAddresses] = useState(false);
     const navigate = useNavigate();
+    const [licensePlateInput, setLicensePlateInput] = useState('');
+    const [selectedAddress, setSelectedAddress] = useState(null);
 
     useEffect(() => {
         if (alignment === 'reserve') {
@@ -212,6 +214,7 @@ const PaymentView = () => {
         setInputLabel(newAlignment === 'pay' ? 'Enter License Plate' : 'Select Parking Lot');
         setCity(null);  // Reset city to null whenever the alignment changes
         setAddresses([]);
+        setSelectedAddress(null);
         }
     };
 
@@ -391,6 +394,9 @@ const PaymentView = () => {
                             getOptionLabel={(option) => option.street_address}
                             options={addresses}
                             loading={loadingAddresses}
+                            onChange={(event, newValue) => {
+                                setSelectedAddress(newValue);
+                            }}
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
@@ -452,6 +458,10 @@ const PaymentView = () => {
                             getOptionLabel={(option) => option.street_address}
                             options={addresses}
                             loading={loadingAddresses}
+                            onChange={(event, newValue) => {
+                                setSelectedAddress(newValue);
+                                setLicensePlateInput(''); // Reset license plate input whenever a new address is selected
+                            }}
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
@@ -467,6 +477,16 @@ const PaymentView = () => {
                                     }}
                                 />
                             )}
+                        />
+                    )}
+                    {selectedAddress && city && (
+                        <TextField
+                            fullWidth
+                            label="Enter License Plate"
+                            value={licensePlateInput}
+                            onChange={(e) => setLicensePlateInput(e.target.value)}
+                            variant="outlined"
+                            margin="normal"
                         />
                     )}
                 <ConfirmButton onClick={handleFallbackSearch} />
