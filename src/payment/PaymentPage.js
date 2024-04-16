@@ -108,7 +108,16 @@ const PaymentView = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const [fallbackParkingLot, setFallbackParkingLot] = useState('');
     const [licensePlate, setLicensePlate] = useState('');
+    const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [parkingLots, setParkingLots] = useState([]); // This would be fetched similar to earlier examples
+    const [city, setCity] = useState(null);
+    const [cities, setCities] = useState([]);
+    const [addresses, setAddresses] = useState([]);
+    const [openCities, setOpenCities] = useState(false);
+    const [openAddresses, setOpenAddresses] = useState(false);
+    const [loadingCities, setLoadingCities] = useState(false);
+    const [loadingAddresses, setLoadingAddresses] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -118,7 +127,79 @@ const PaymentView = () => {
         if (!localStorage.getItem('csrfToken')) {
             fetchCsrfToken();
         }
+        let active = true;
+
+        if (!open) {
+            setOptions([]);
+        }
+
+        if (open && options.length === 0 && active) {
+            setLoading(true);
+            axios.get('http://127.0.0.1:8000/city/cities/')
+                .then((response) => {
+                    const cities = response.data; // Assuming the response is directly an array
+                    if (active) {
+                        setOptions(cities);
+                        setLoading(false);
+                    }
+                })
+                .catch(() => {
+                    if (active) {
+                        setLoading(false);
+                        // Handle errors here, e.g., by setting an error message
+                    }
+                });
+        }
+
+        return () => {
+            active = false;
+        };
+    }, [alignment, open]);
+
+    useEffect(() => {
+        const loadCities = async () => {
+          setLoadingCities(true);
+          try {
+            const response = await axios.get('http://127.0.0.1:8000/city/cities/');
+            setCities(response.data);
+          } catch (error) {
+            console.error('Failed to fetch cities:', error);
+          }
+          setLoadingCities(false);
+        };
+    
+        if (alignment === 'reserve') {
+          loadCities();
+        }
     }, [alignment]);
+
+    useEffect(() => {
+        const loadAddresses = async () => {
+          if (!city) {
+            setAddresses([]); // Clear addresses when no city is selected
+            return;
+        }
+        setLoadingAddresses(true);
+        try {
+            const csrfToken = localStorage.getItem('csrfToken');
+            const response = await axios.post('http://127.0.0.1:8000/parking/parking-lots/by-city/', {
+              city_name: city
+            }, {
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+              }
+            });
+            setAddresses(response.data);
+          } catch (error) {
+            console.error('Failed to fetch addresses:', error);
+            setAddresses([]);
+          }
+          setLoadingAddresses(false);
+        };
+    
+        loadAddresses();
+      }, [city]);
 
     const loadParkingLots = async () => {
         const response = await new Promise((resolve) => setTimeout(() => resolve(['Lot 1', 'Lot 2', 'Lot 3', 'Lot 4', 'Lot 5']), 1000));
@@ -129,6 +210,8 @@ const PaymentView = () => {
         if (newAlignment !== null) {
         setAlignment(newAlignment);
         setInputLabel(newAlignment === 'pay' ? 'Enter License Plate' : 'Select Parking Lot');
+        setCity(null);  // Reset city to null whenever the alignment changes
+        setAddresses([]);
         }
     };
 
@@ -156,7 +239,7 @@ const PaymentView = () => {
                 setSelectedInvoice(null);
             } else {
               // Handle non-200 responses
-                setErrorMessage('No unpaid invoices found for this license plate.');
+                setErrorMessage('No unpaid invoices found for this license plate. Let\'s search!');
                 setServerResponse([]);
             }
         } catch (error) {
@@ -240,7 +323,7 @@ const PaymentView = () => {
             <ToggleButton value="pay" aria-label="pay">Pay</ToggleButton>
             <ToggleButton value="reserve" aria-label="reserve">Reserve</ToggleButton>
           </ToggleButtonGroup>
-          {alignment === 'pay' ? (
+        {alignment === 'pay' ? (
             <FormControl fullWidth variant="outlined">
               <InputLabel htmlFor="search-field">{inputLabel}</InputLabel>
               <OutlinedInput
@@ -267,37 +350,127 @@ const PaymentView = () => {
                     ))}
                 </Box>
                 {selectedInvoice && <ConfirmButton onClick={confirmPayment} />}
-                    {errorMessage && (
-                        <Typography color="error">{errorMessage}</Typography>
-                    )}
                 {errorMessage && (
-                    <Typography color="error" sx={{ mt: 2 }}>{errorMessage}</Typography>
-                )}
-              {errorMessage && (
                 <>
-                  <Typography color="error" sx={{ mt: 2 }}>{errorMessage}</Typography>
+                  <Typography color="error" sx={{ mt: 0 }}>{errorMessage}</Typography>
                   <Autocomplete
                     fullWidth
+                    open={open}
+                    onOpen={() => setOpen(true)}
+                    onClose={() => setOpen(false)}
+                    isOptionEqualToValue={(option, value) => option === value}
+                    getOptionLabel={(option) => option.name} // Adjust depending on how your data is structured
                     options={options}
-                    getOptionLabel={option => option.toString()}
-                    value={fallbackParkingLot}
-                    onChange={(event, newValue) => setFallbackParkingLot(newValue)}
-                    renderInput={(params) => <TextField {...params} label="Select Parking Lot" variant="outlined" />}
-                    sx={{ mt: 1 }}
-                  />
-                  <ConfirmButton onClick={handleFallbackSearch} />
+                    loading={loading}
+                    onChange={(event, newValue) => {
+                        setCity(newValue?.name);
+                    }}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Select a City"
+                            InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                    <>
+                                        {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                        {params.InputProps.endAdornment}
+                                    </>
+                                ),
+                            }}
+                        />
+                    )}
+                    />
+                    {city && (
+                        <Autocomplete
+                            fullWidth
+                            open={openAddresses}
+                            onOpen={() => setOpenAddresses(true)}
+                            onClose={() => setOpenAddresses(false)}
+                            isOptionEqualToValue={(option, value) => option === value}
+                            getOptionLabel={(option) => option.street_address}
+                            options={addresses}
+                            loading={loadingAddresses}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Select an Address"
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        endAdornment: (
+                                            <>
+                                                {loadingAddresses ? <CircularProgress color="inherit" size={20} /> : null}
+                                                {params.InputProps.endAdornment}
+                                            </>
+                                        ),
+                                    }}
+                                />
+                            )}
+                        />
+                    )}
+                <ConfirmButton onClick={handleFallbackSearch} />
                 </>
               )}
             </FormControl>
-          ) : (
-            <Autocomplete
-                fullWidth
-                options={options}
-                onInputChange={(event, newValue) => {
-                    setSearchValue(newValue);
-                }}
-                renderInput={(params) => <TextField {...params} label={inputLabel} variant="outlined" />}
-            />
+        ) : (
+            <>
+                <Autocomplete
+                    fullWidth
+                    open={open}
+                    onOpen={() => setOpen(true)}
+                    onClose={() => setOpen(false)}
+                    isOptionEqualToValue={(option, value) => option === value}
+                    getOptionLabel={(option) => option.name} // Adjust depending on how your data is structured
+                    options={cities}
+                    loading={loadingCities}
+                    onChange={(event, newValue) => {
+                        setCity(newValue?.name);
+                    }}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Select a City"
+                            InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                    <>
+                                        {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                        {params.InputProps.endAdornment}
+                                    </>
+                                ),
+                            }}
+                        />
+                    )}
+                    />
+                    {city && (
+                        <Autocomplete
+                            fullWidth
+                            open={openAddresses}
+                            onOpen={() => setOpenAddresses(true)}
+                            onClose={() => setOpenAddresses(false)}
+                            isOptionEqualToValue={(option, value) => option === value}
+                            getOptionLabel={(option) => option.street_address}
+                            options={addresses}
+                            loading={loadingAddresses}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Select an Address"
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        endAdornment: (
+                                            <>
+                                                {loadingAddresses ? <CircularProgress color="inherit" size={20} /> : null}
+                                                {params.InputProps.endAdornment}
+                                            </>
+                                        ),
+                                    }}
+                                />
+                            )}
+                        />
+                    )}
+                <ConfirmButton onClick={handleFallbackSearch} />
+            </>
           )}
         </Paper>
       </Box>
