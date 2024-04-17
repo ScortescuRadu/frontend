@@ -538,11 +538,11 @@ const PaymentView = () => {
             }}>
             <Grid container spacing={4} alignItems="center">
                 <Grid item xs={12} md={6} order={{ xs: 2, md: 1 }}>
-                <Typography variant="h4" component="h2" sx={{ fontWeight: 'bold', mb: 2, paddingLeft: '40px' }}>
-                    This is a <Box component="span" sx={{ backgroundColor: '#ffff00', color: '#000' }}>Highlighted Title</Box>
+                <Typography variant="h4" component="h2" sx={{ fontWeight: 'bold', mb: 2, mt:4, paddingLeft: '30px' }}>
+                    Parking right where <Box component="span" sx={{ backgroundColor: '#ffff00', color: '#000' }}>you need to be</Box>
                 </Typography>
-                <Typography variant="body1" color="text.secondary" padding='20px'>
-                    Here is some explanatory text about the topic. This text can be a couple of paragraphs long and should provide the reader with all the necessary information on the topic, formatted in a clear and accessible way.
+                <Typography variant="body1" color="text.secondary" fontWeight='bold' padding='20px' marginLeft={'30px'} marginBottom={'30px'}>
+                    Finding a parking space right where you need it can often turn into a daunting task, whether you're headed to a bustling event, rushing to work, or planning a leisurely outing. Our service simplifies this challenge by connecting you to parking spots located strategically near key destinations. With just a few taps, you can reserve a spot close to your event venue, office building, or any prime location of your choosing. No more circling around in hopes of a lucky break; secure your spot ahead of time, and focus on what really matters. Enjoy peace of mind knowing that your parking is sorted, allowing you more time to enjoy your activities or get right to work without the hassle.
                 </Typography>
                 </Grid>
                 <Grid item xs={12} md={6} order={{ xs: 1, md: 2 }}>

@@ -51,7 +51,7 @@ const ParkingLots = () => {
   };
 
   return (
-    <div style={{ display: 'flex', margin: '0', justifyContent: 'center' }}>
+    <div style={{ display: 'flex', margin: '0', justifyContent: 'center', backgroundColor: '#62728c' }}>
       <Box
         sx={{
           position: 'relative',
