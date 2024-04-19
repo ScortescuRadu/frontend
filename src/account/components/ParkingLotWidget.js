@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, Typography, Select, MenuItem, Box } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import IconButton from '@mui/material/IconButton';
-import ParkingLotSVG from './ParkingLotSVG';
+import ParkingLot3D from './ParkingLot3D';
 
 const ParkingLotWidget = () => {
   const [selectedLevel, setSelectedLevel] = useState(1);
@@ -56,7 +56,7 @@ const ParkingLotWidget = () => {
         ))}
       </Box>
       {/* Placeholder for parking map */}
-      <ParkingLotSVG />
+      <ParkingLot3D />
     </Card>
   );
 };
