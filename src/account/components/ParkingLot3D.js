@@ -1,14 +1,14 @@
 import React, { useRef, useState } from 'react';
 import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
 import { OrbitControls, Plane, PerspectiveCamera } from '@react-three/drei';
-import { IconButton, Button, Box } from '@mui/material';
+import { IconButton, Button, Box, SpeedDial, SpeedDialIcon, SpeedDialAction } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import Palette from './MapPallete';
 import * as THREE from 'three';
 import { TextureLoader } from 'three';
 import spot from '../assets/spot.jpg'
@@ -20,6 +20,13 @@ const textures = {
   road: road,
   grass: grass
 };
+
+const tileTypes = [
+  { name: 'parking', texture: spot, icon: '🚗' },
+  { name: 'road', texture: road, icon: '🛣️' },
+  { name: 'grass', texture: grass, icon: '🌱' },
+  { name: 'erase', icon: '🧽' }
+];
 
 const HoverEffect = ({ editTile, currentType, editing }) => {
   const planeRef = useRef();
@@ -58,6 +65,7 @@ const ParkingLot3D = () => {
   const [tiles, setTiles] = useState({});
   const [currentType, setCurrentType] = useState(null);
   const [editing, setEditing] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const loadedTextures = useLoader(TextureLoader, Object.values(textures));
   const textureMap = {
@@ -84,6 +92,8 @@ const ParkingLot3D = () => {
   const toggleEditing = () => {
       setEditing(!editing);
   };
+
+  const toggleOpen = () => setOpen(!open);
 
   const zoomIn = () => {
     const controls = controlRef.current;
@@ -116,7 +126,7 @@ const ParkingLot3D = () => {
         default: break;
       }
       // Keep looking at the center or a fixed point on the grid
-      camera.lookAt(new THREE.Vector3(0, 0, 0));
+      camera.lookAt(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z));
     }
   };
 
@@ -143,13 +153,30 @@ const ParkingLot3D = () => {
             );
         })}
       </Canvas>
-      <Box position="absolute" left="0%" bottom={12} transform="translateX(-50%)" display="flex">
-        <Palette setCurrentType={setCurrentType} />
-        <Button onClick={toggleEditing} variant="contained" color="primary">
-          {editing ? 'Stop Editing' : 'Edit'}
-        </Button>
+      <Box position="absolute" right={50} bottom={16}>
+        <SpeedDial
+          ariaLabel="Edit Options"
+          icon={<SpeedDialIcon />}
+          onClick={toggleOpen}
+          open={open}
+        >
+          {tileTypes.map((tileType) => (
+            <SpeedDialAction
+              key={tileType.name}
+              icon={tileType.icon}
+              tooltipTitle={tileType.name}
+              tooltipOpen
+              onClick={(event) => {
+                event.stopPropagation();
+                setCurrentType(tileType.name);
+                if (!editing)
+                  toggleEditing(true)
+              }}
+          />
+          ))}
+        </SpeedDial>
       </Box>
-      <Box position="absolute" top={0} right={0} p={1}>
+      <Box position="absolute" top={0} right={50} p={1}>
         <IconButton onClick={zoomIn}><ZoomInIcon /></IconButton>
         <IconButton onClick={zoomOut}><ZoomOutIcon /></IconButton>
       </Box>
