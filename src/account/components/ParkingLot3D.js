@@ -9,6 +9,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import * as THREE from 'three';
 import { TextureLoader } from 'three';
 import spot from '../assets/spot.jpg'
@@ -69,6 +70,7 @@ const ParkingLot3D = () => {
   const [sectorNumbers, setSectorNumbers] = useState({});
   const [sector, setSector] = useState('A');
   const [number, setNumber] = useState(0);
+  const [rotation, setRotation] = useState(0);
 
   const loadedTextures = useLoader(TextureLoader, Object.values(textures));
   const textureMap = {
@@ -88,9 +90,17 @@ const ParkingLot3D = () => {
       });
     } else {
       const newNumber = typeKey === 'parking' ? (sectorNumbers[sector] || 0) + 1 : undefined;
+      const tileData = {
+        type: typeKey,
+        texture: textureMap[typeKey],
+        sector,
+        number: newNumber,
+        rotation: typeKey === 'parking' ? rotation : 0  // Apply rotation only for parking tiles
+      };
+
       setTiles(prev => ({
         ...prev,
-        [position]: { type: typeKey, texture: textureMap[typeKey], sector, number: newNumber }
+        [position]: tileData
       }));
       if (typeKey === 'parking') {
         setSectorNumbers(prev => ({ ...prev, [sector]: newNumber }));
@@ -149,19 +159,8 @@ const ParkingLot3D = () => {
     setNumber(prev => Math.max(0, prev + delta)); // Ensure number is never negative
   };
 
-  const applyTileChanges = (position) => {
-    if (currentType === 'erase') {
-        setTiles(prev => {
-            const updatedTiles = { ...prev };
-            delete updatedTiles[position];
-            return updatedTiles;
-        });
-    } else {
-        setTiles(prev => ({
-            ...prev,
-            [position]: { type: currentType, sector, number }
-        }));
-    }
+  const handleRotate = () => {
+    setRotation((prevRotation) => prevRotation - 90);
   };
 
   const ParkingDetails = () => (
@@ -191,6 +190,11 @@ const ParkingLot3D = () => {
             />
             <Button onClick={() => handleNumberChange(null, 1)}>+</Button>
         </Box>
+        <Box display="flex" alignItems="center">
+          <Button startIcon={<RotateLeftIcon />} onClick={handleRotate} fullWidth>
+            Rotate
+          </Button>
+        </Box>
     </Box>
   );
 
@@ -203,10 +207,10 @@ const ParkingLot3D = () => {
         <PerspectiveCamera makeDefault position={[0, 25, 0]} fov={45} />
         <gridHelper args={[20, 20]} />
         <HoverEffect editTile={editTile} currentType={currentType} editing={editing}/>
-        {Object.entries(tiles).map(([key, { texture }]) => {
+        {Object.entries(tiles).map(([key, { texture, rotation }]) => {
           const [x, z] = key.split(',').map(Number);
           return (
-            <Plane key={key} position={[x, 0.01, z]} args={[1, 1]} rotation={[-Math.PI / 2, 0, 0]} visible={true}>
+            <Plane key={key} position={[x, 0.01, z]} args={[1, 1]} rotation={[-Math.PI / 2, 0, THREE.MathUtils.degToRad(rotation)]} visible={true}>
               <meshStandardMaterial attach="material" map={texture} />
             </Plane>
           );
