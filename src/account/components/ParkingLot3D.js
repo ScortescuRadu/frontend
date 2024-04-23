@@ -64,6 +64,7 @@ const ParkingLot3D = () => {
   const controlRef = useRef();
   const [hoveredTile, setHoveredTile] = useState(null);
   const [tiles, setTiles] = useState({});
+  const [lastConfirmedTiles, setLastConfirmedTiles] = useState({});
   const [currentType, setCurrentType] = useState(null);
   const [editing, setEditing] = useState(false);
   const [open, setOpen] = useState(false);
@@ -71,6 +72,7 @@ const ParkingLot3D = () => {
   const [sector, setSector] = useState('A');
   const [number, setNumber] = useState(0);
   const [rotation, setRotation] = useState(0);
+  const [isChanged, setIsChanged] = useState(false);
 
   const loadedTextures = useLoader(TextureLoader, Object.values(textures));
   const textureMap = {
@@ -81,6 +83,7 @@ const ParkingLot3D = () => {
 
   const editTile = (position, typeKey) => {
     console.log(`Editing tile at ${position} with type ${typeKey}`);
+    setIsChanged(true);
     if (!editing || typeKey === 'erase') {
       console.log('Erasing or not editing');
       setTiles(prev => {
@@ -163,6 +166,18 @@ const ParkingLot3D = () => {
     setRotation((prevRotation) => prevRotation - 90);
   };
 
+  const confirmEdits = () => {
+    console.log("Edits confirmed.");
+    setLastConfirmedTiles(tiles);
+    setIsChanged(false);
+  };
+
+  const cancelEdits = () => {
+    setTiles(lastConfirmedTiles);
+    console.log("Edits cancelled.");
+    setIsChanged(false);
+  };
+
   const ParkingDetails = () => (
     <Box position="absolute" left="20px" bottom="20px" style={{ backgroundColor: 'white', padding: '10px', borderRadius: '5px' }}>
         <Typography variant="h6">Parking Details</Typography>
@@ -199,7 +214,43 @@ const ParkingLot3D = () => {
   );
 
   return (
-    <Box position="relative" width="90vw" height="500px">
+    <Box position="relative" width="90vw" height="630px">
+    {isChanged && <Box position="absolute" top="10px" left="0" right="0" p={2} style={{ margin: 'auto', width: 'fit-content' }}>
+      <Button
+        variant="contained"
+        onClick={confirmEdits}
+        disabled={false}
+        style={{
+          backgroundColor: '#1b1b1b',
+          color: '#ffffff',
+          marginRight: '10px',
+          fontWeight: 'bold',
+          padding: '10px 20px',
+          borderRadius: '20px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          textTransform: 'none'
+        }}
+      >
+        Confirm
+      </Button>
+      <Button
+        variant="contained"
+        onClick={cancelEdits}
+        disabled={false}
+        style={{
+          backgroundColor: '#f3f3f3',
+          color: '#1b1b1b',
+          fontWeight: 'bold',
+          padding: '10px 20px',
+          borderRadius: '20px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+          textTransform: 'none'
+        }}
+      >
+        Cancel
+      </Button>
+    </Box>}
+    <Box position="relative" width="100%" height="500px" style={{ top: '90px' }}>
       <Canvas>
         <OrbitControls ref={controlRef} enableRotate={false} enableZoom={false} enablePan={false} target={[0, 0, 0]} />
         <ambientLight intensity={2.5} />
@@ -244,12 +295,15 @@ const ParkingLot3D = () => {
         <IconButton onClick={zoomIn}><ZoomInIcon /></IconButton>
         <IconButton onClick={zoomOut}><ZoomOutIcon /></IconButton>
       </Box>
-      <Box position="absolute" left="45%" bottom={0} transform="translateX(-50%)" display="flex">
+    </Box>
+    <Box position="relative" width="100%" height="500px" style={{ top: '60px' }}>
+      <Box position="absolute" top="10px" left="0" right="0" p={2} style={{ margin: 'auto', width: 'fit-content' }}>
         <IconButton onClick={() => moveCamera('left')}><ArrowBackIcon /></IconButton>
         <IconButton onClick={() => moveCamera('up')}><ArrowUpwardIcon /></IconButton>
         <IconButton onClick={() => moveCamera('down')}><ArrowDownwardIcon /></IconButton>
         <IconButton onClick={() => moveCamera('right')}><ArrowForwardIcon /></IconButton>
       </Box>
+    </Box>
     </Box>
   );
 };
