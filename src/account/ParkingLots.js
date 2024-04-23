@@ -5,7 +5,7 @@ import Box from '@mui/material/Box';
 import AddIcon from '@mui/icons-material/Add';
 import { Link } from 'react-router-dom';
 
-const ParkingLots = () => {
+const ParkingLots = ({color='#62728c'}) => {
   const [selectedOption, setSelectedOption] = useState([]);
   const [fetchedOptions, setFetchedOptions] = useState([]);
 
@@ -51,7 +51,7 @@ const ParkingLots = () => {
   };
 
   return (
-    <div style={{ display: 'flex', margin: '0', justifyContent: 'center', backgroundColor: '#62728c' }}>
+    <div style={{ display: 'flex', margin: '0', justifyContent: 'center', backgroundColor: color }}>
       <Box
         sx={{
           position: 'relative',
