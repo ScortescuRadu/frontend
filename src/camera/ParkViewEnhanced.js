@@ -7,6 +7,7 @@ import EntranceStream from './EntranceStream';
 import CameraGrid from './components/CameraGrid';
 import CameraSetupForm from './components/CameraSetupForm';
 import CameraDisplay from './components/CameraDisplay';
+import AddCameraImage from './assets/AddCamera.jpg'
 
 const ParkViewEnhanced = () => {
     const cardData = [
@@ -21,6 +22,7 @@ const ParkViewEnhanced = () => {
         cameraName: '',
         selectedCamera: '',
         localVideo: null,
+        localVideoPath: ''
     });
     const [connectedCameras, setConnectedCameras] = useState([]);
     /// LocalVideo
@@ -63,6 +65,7 @@ const ParkViewEnhanced = () => {
           selectedCamera: '',
           cameraName: '',
           localVideo: null,
+          localVideoPath: ''
         });
         setLoading(false);
         setEntranceSetup(false);
@@ -90,7 +93,6 @@ const ParkViewEnhanced = () => {
     };
 
     const isDataFilled = () => {
-        console.log('localVideo:', formData.localVideo)
         switch (selectedOption) {
           case 'connectedCamera':
             return formData.selectedCamera !== '';
@@ -100,7 +102,7 @@ const ParkViewEnhanced = () => {
             return formData.cameraName !== '';
 
           case 'localVideo':
-              return formData.localVideo !== null;
+              return formData.localVideoPath !== '';
       
           default:
             return false;
@@ -212,7 +214,8 @@ const ParkViewEnhanced = () => {
             <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
             {!showForm ? (
               <>
-              <h2>Add Camera</h2>
+              <h2 style={modalHeader}>Add Camera</h2>
+              <img src={AddCameraImage} alt="Add Camera Animation" style={cameraGif} />
               <CameraSetupForm
                 formData={formData}
                 setFormData={setFormData}
@@ -222,9 +225,9 @@ const ParkViewEnhanced = () => {
                 setSelectedOption={setSelectedOption}
                 onSubmit={handleFormSubmit}
               />
-              <div style={{ textAlign: 'center', marginTop: '10px', marginBottom: '10px' }}>
+              <div style={{nextButtonContainer}}>
                 {selectedOption && isDataFilled() && (
-                    <button style={{color: 'red'}} onClick={handleNextButtonClick}>
+                    <button style={nextButton} onClick={handleNextButtonClick}>
                         Next
                     </button>
                     )}
@@ -273,10 +276,42 @@ const modalOverlayStyle = {
 };
   
 const modalContentStyle = {
-    backgroundColor: '#fff',
-    padding: '20px',
-    borderRadius: '8px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+  position: 'relative',
+  padding: '20px',
+  backgroundColor: '#fff',
+  borderRadius: '10px',
+  boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.5)',
+  textAlign: 'center'
 };
 
+const modalHeader = {
+  marginBottom: '20px',
+  color: '#333',
+  textAlign: 'center'
+};
+
+const cameraGif = {
+  width: '100%',
+  maxWidth: '300px',
+  margin: '0 auto',
+  marginBottom: '20px',
+  display: 'block'
+};
+
+const nextButtonContainer = {
+  textAlign: 'center',
+  marginTop: '20px'
+};
+
+const nextButton = {
+  padding: '10px 20px',
+  fontSize: '16px',
+  color: '#fff',
+  marginTop: '20px',
+  backgroundColor: '#000',
+  border: 'none',
+  borderRadius: '5px',
+  cursor: 'pointer',
+  outline: 'none'
+}
 export default ParkViewEnhanced;

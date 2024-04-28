@@ -2,6 +2,10 @@
 import React from 'react';
 
 const CameraSetupForm = ({ formData, setFormData, connectedCameras, handleInputChange, selectedOption, setSelectedOption, onSubmit }) => {
+    const handlePathInput = (event) => {
+        setFormData({ ...formData, localVideoPath: event.target.value }); // Update state with the new path
+    };
+    
     return (
         <form onSubmit={onSubmit}>
             <label>
@@ -42,15 +46,13 @@ const CameraSetupForm = ({ formData, setFormData, connectedCameras, handleInputC
 
             {selectedOption === 'localVideo' && (
                 <label>
-                    Local Video File:
+                    Video File Path:
                     <input
-                        type="file"
-                        name="localVideo"
-                        accept="video/*"
-                        onChange={(e) => {
-                            const file = e.target.files[0];
-                            setFormData({ ...formData, localVideo: file });
-                        }}
+                        type="text"
+                        name="localVideoPath"
+                        onChange={handlePathInput}
+                        value={formData.localVideoPath}
+                        placeholder="Enter path to video file"
                     />
                 </label>
             )}

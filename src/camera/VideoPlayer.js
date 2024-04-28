@@ -10,8 +10,10 @@ const VideoPlayer = ({ videoUrl }) => {
 
     let VID_REGEX = /(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
     console.log(videoUrl.match(VID_REGEX)[1])
-    setVideoId(videoUrl.match(VID_REGEX)[1]);
-
+    const match = videoUrl.match(VID_REGEX);
+    if (match && match[1]) {
+      setVideoId(match[1]);
+    }
   }, [videoUrl]);
 
   const opts = {
@@ -24,7 +26,21 @@ const VideoPlayer = ({ videoUrl }) => {
 
   const onReady = (event) => {
     // Uncomment the line below if you want to play the video programmatically
-    // event.target.playVideo();
+    event.target.pauseVideo();
+  };
+
+  const captureFrame = async (player) => {
+    if (!videoId) return;
+    try {
+      const response = await fetch(`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`);
+      if (!response.ok) throw new Error('Failed to fetch thumbnail');
+      const imageUrl = await response.blob();
+      const urlCreator = window.URL || window.webkitURL;
+      const imageUrlSrc = urlCreator.createObjectURL(imageUrl);
+      console.log('Frame captured:', imageUrlSrc); // Here you can set state or handle the image URL further
+    } catch (error) {
+      console.error('Error fetching thumbnail:', error);
+    }
   };
 
   const onPlay = async (event) => {
@@ -63,17 +79,9 @@ const VideoPlayer = ({ videoUrl }) => {
   return (
     <div>
       {videoId && (
-        <YouTube videoId={videoId} opts={opts} onReady={onReady} onPlay={onPlay} />
+        <YouTube videoId={videoId} opts={opts} onReady={onReady} />
       )}
-
-      {/* Display the frame after the first second */}
-      {showFrame && (
-        <div>
-          <h3>Frame after 1 second</h3>
-            {/* Display the captured frame (thumbnail) */}
-            <img src={thumbnailUrl} alt="Video Thumbnail" style={{ width: '100%', height: 'auto' }} />
-        </div>
-      )}
+      <button onClick={() => captureFrame()}>Capture Frame</button>
     </div>
   );
 };

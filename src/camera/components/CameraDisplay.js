@@ -3,6 +3,7 @@ import ReactPlayer from 'react-player';
 import Webcam from 'react-webcam';
 import VideoPlayer from '../VideoPlayer';
 import EntranceStream from '../EntranceStream';
+import test_video from '../tests/camera_test.mp4'
 
 const CameraDisplay = ({
         selectedOption,
@@ -39,16 +40,16 @@ const CameraDisplay = ({
                 <VideoPlayer videoUrl={formData.cameraName} />
             )}
 
-            {selectedOption === 'localVideo' && formData.localVideo && (
+            {selectedOption === 'localVideo' && formData.localVideoPath && (
                 <div>
                     {entranceSetup ? (
-                        <EntranceStream videoRef={playerRef} localVideo={formData.localVideo} />
+                        <EntranceStream videoRef={playerRef} localVideo={formData.localVideoPath} />
                     ) : (
                         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                             {!showCurrentFrame ? (
                                 <ReactPlayer
                                     ref={playerRef}
-                                    url={URL.createObjectURL(formData.localVideo)}
+                                    url={test_video} // url={URL.createObjectURL(formData.localVideo)}
                                     width="100%"
                                     height="100%"
                                     controls={true}
