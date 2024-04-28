@@ -8,6 +8,7 @@ import CameraGrid from './components/CameraGrid';
 import CameraSetupForm from './components/CameraSetupForm';
 import CameraDisplay from './components/CameraDisplay';
 import AddCameraImage from './assets/AddCamera.jpg'
+import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
 const ParkViewEnhanced = () => {
     const cardData = [
@@ -32,13 +33,16 @@ const ParkViewEnhanced = () => {
     const playerRef = useRef(null);
     const [loading, setLoading] = useState(false);
     //////////////
+    /// Image processing through websocket
+    /////////////
+    const [boundingBoxes, setBoundingBoxes] = useState([]);
+    const client = useRef(null);
 
     useEffect(() => {
-        // Fetch connected cameras when the component mounts
         fetchConnectedCameras();
     }, []);
     
-      const fetchConnectedCameras = async () => {
+    const fetchConnectedCameras = async () => {
         try {
           const devices = await navigator.mediaDevices.enumerateDevices();
           const cameras = devices.filter(device => device.kind === 'videoinput');
@@ -46,7 +50,7 @@ const ParkViewEnhanced = () => {
         } catch (error) {
           console.error('Error fetching connected cameras:', error);
         }
-      };
+    };
     
 
     const handleAddCameraClick = () => {
@@ -136,69 +140,126 @@ const ParkViewEnhanced = () => {
       setLoading(false);
     };
 
+    const setupWebSocket = (task_id) => {
+      const wsUrl = `ws://${window.location.hostname}:8000/ws/task_status/${task_id}/`;
+      console.log(wsUrl);
+      client.current = new W3CWebSocket(wsUrl);
+  
+      client.current.onopen = () => {
+          console.log('WebSocket Client Connected for task:', task_id);
+      };
+  
+      client.current.onmessage = (message) => {
+          const data = JSON.parse(message.data);
+          console.log('Received data from server:', data);
+          if (data.message === "Processing complete") {
+            console.log('Bounding boxes:', data.content);
+            setBoundingBoxes(data.content); // Process the result
+            setLoading(false);
+            client.current.close();
+        }
+      };
+
+      client.current.onerror = () => {
+          console.log('WebSocket Connection Error');
+      };
+  
+      client.current.onclose = () => {
+          console.log('WebSocket Client Disconnected');
+      };
+    };
+
     const handleFindSpotsClick = async () => {
       setLoading(true);
-
-      if (currentFrameImage) {
-        const imageBlob = await new Promise(resolve => {
-          fetch(currentFrameImage)
-            .then(response => response.blob())
-            .then(blob => resolve(blob));
-        });
   
-        const formDataImage = new FormData();
-        // console.log(formDataImage)
-        formDataImage.append('image', imageBlob, 'current_frame.jpg');
-        const response = await fetch('http://127.0.0.1:8000/spot-detection/process_image/', {
-          method: 'POST',
-          body: formDataImage,
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          const taskId = result.task_id;
-
-          // Poll the Celery task status and get the result
-          const pollTaskStatus = async () => {
-              const statusResponse = await fetch(`http://127.0.0.1:8000/spot-detection/check_task_status/${taskId}/`);
-              const taskStatus = await statusResponse.json();
-
-          if (taskStatus.status === 'SUCCESS') {
-            // Image processing completed, get the bounding boxes
-            const boundingBoxes = taskStatus.result;
-
-            // Update state or perform other actions with bounding boxes
-            console.log('Bounding Boxes:', boundingBoxes);
-            setLoading(false); // Hide loading indicator
-
-            // Store bounding boxes in the database (optional)
-            // await fetch('http://your-django-backend-url/store_bounding_boxes/', {
-            //   method: 'POST',
-            //   headers: {
-            //     'Content-Type': 'application/json',
-            //   },
-            //   body: JSON.stringify({
-            //     task_id: taskId,
-            //     bounding_boxes_json: JSON.stringify(boundingBoxes),
-            //   }),
-            // });
-          } else if (taskStatus.status === 'FAILURE') {
-            console.error('Error processing image:', taskStatus.message);
-            setLoading(false); // Hide loading indicator
-          } else {
-            // Task still in progress, continue polling
-            setTimeout(pollTaskStatus, 1000);
-          }
-        };
-
-          // Start polling the task status
-          pollTaskStatus();
-        } else {
-          console.error('Error sending image to Django:', response.statusText);
-          setLoading(false); // Hide loading indicator
-        }
+      if (currentFrameImage) {
+          const imageBlob = await fetch(currentFrameImage).then(res => res.blob());
+  
+          const formData = new FormData();
+          formData.append('image', imageBlob, 'frame.jpg');
+  
+          fetch('http://127.0.0.1:8000/spot-detection/process_image/', {
+              method: 'POST',
+              body: formData,
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.task_id) {
+                  console.log('Processing started, task ID:', data.task_id);
+                  // Establish WebSocket connection with the task ID
+                  setupWebSocket(data.task_id);
+              }
+          })
+          .catch(error => {
+              console.error('Error uploading image:', error);
+              setLoading(false);
+          });
       }
     };
+
+    // const handleFindSpotsClick = async () => {
+    //   setLoading(true);
+
+    //   if (currentFrameImage) {
+    //     const imageBlob = await new Promise(resolve => {
+    //       fetch(currentFrameImage)
+    //         .then(response => response.blob())
+    //         .then(blob => resolve(blob));
+    //     });
+  
+    //     const formDataImage = new FormData();
+    //     // console.log(formDataImage)
+    //     formDataImage.append('image', imageBlob, 'current_frame.jpg');
+    //     const response = await fetch('http://127.0.0.1:8000/spot-detection/process_image/', {
+    //       method: 'POST',
+    //       body: formDataImage,
+    //     });
+
+    //     if (response.ok) {
+    //       const result = await response.json();
+    //       const taskId = result.task_id;
+
+    //       // Poll the Celery task status and get the result
+    //       const pollTaskStatus = async () => {
+    //           const statusResponse = await fetch(`http://127.0.0.1:8000/spot-detection/check_task_status/${taskId}/`);
+    //           const taskStatus = await statusResponse.json();
+
+    //       if (taskStatus.status === 'SUCCESS') {
+    //         // Image processing completed, get the bounding boxes
+    //         const boundingBoxes = taskStatus.result;
+
+    //         // Update state or perform other actions with bounding boxes
+    //         console.log('Bounding Boxes:', boundingBoxes);
+    //         setLoading(false); // Hide loading indicator
+
+    //         // Store bounding boxes in the database (optional)
+    //         // await fetch('http://your-django-backend-url/store_bounding_boxes/', {
+    //         //   method: 'POST',
+    //         //   headers: {
+    //         //     'Content-Type': 'application/json',
+    //         //   },
+    //         //   body: JSON.stringify({
+    //         //     task_id: taskId,
+    //         //     bounding_boxes_json: JSON.stringify(boundingBoxes),
+    //         //   }),
+    //         // });
+    //       } else if (taskStatus.status === 'FAILURE') {
+    //         console.error('Error processing image:', taskStatus.message);
+    //         setLoading(false); // Hide loading indicator
+    //       } else {
+    //         // Task still in progress, continue polling
+    //         setTimeout(pollTaskStatus, 1000);
+    //       }
+    //     };
+
+    //       // Start polling the task status
+    //       pollTaskStatus();
+    //     } else {
+    //       console.error('Error sending image to Django:', response.statusText);
+    //       setLoading(false); // Hide loading indicator
+    //     }
+    //   }
+    // };
 
     return (
         <div style={{ backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
