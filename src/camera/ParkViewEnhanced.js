@@ -36,6 +36,8 @@ const ParkViewEnhanced = () => {
     /// Image processing through websocket
     /////////////
     const [boundingBoxes, setBoundingBoxes] = useState([]);
+    const [originalImageWidth, setOriginalImageWidth] = useState(null)
+    const [originalImageHeight, setOriginalImageHeight] = useState(null)
     const client = useRef(null);
 
     useEffect(() => {
@@ -153,8 +155,12 @@ const ParkViewEnhanced = () => {
           const data = JSON.parse(message.data);
           console.log('Received data from server:', data);
           if (data.message === "Processing complete") {
-            console.log('Bounding boxes:', data.content);
-            setBoundingBoxes(data.content); // Process the result
+            console.log('Received Data:', data.content);
+            console.log('Bounding Boxes:', data.content.xyxys[0]);
+            console.log('Original Image size:', data.content.width, data.content.height)
+            setBoundingBoxes(data.content.xyxys[0]); // Process the result
+            setOriginalImageWidth(data.content.width)
+            setOriginalImageHeight(data.content.height)
             setLoading(false);
             client.current.close();
         }
@@ -309,6 +315,9 @@ const ParkViewEnhanced = () => {
                         handleFindSpotsClick={handleFindSpotsClick}
                         handleReturnToVideoClick={handleReturnToVideoClick}
                         handleProcessClick={handleProcessClick}
+                        boundingBoxes={boundingBoxes}
+                        originalImageWidth={originalImageWidth}
+                        originalImageHeight={originalImageHeight}
                     />
                     <div style={{ textAlign: 'center', marginTop: '10px', marginBottom: '10px' }}>
                         <button style={{color: 'red'}} onClick={handlePrevButtonClick}>
@@ -326,7 +335,7 @@ const ParkViewEnhanced = () => {
 
 const modalOverlayStyle = {
     position: 'fixed',
-    top: 0,
+    top: '5%',
     left: 0,
     width: '100%',
     height: '100%',
