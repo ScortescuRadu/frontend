@@ -26,6 +26,7 @@ const CameraDisplay = ({
     const mediaContainerRef = useRef(null);
     const [mediaScale, setMediaScale] = useState({ scaleX: 1, scaleY: 1 });
     const [boxesDetails, setBoxesDetails] = useState([]);
+    const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
     const handleFindSpotsClick = () => {
         originalHandleFindSpotsClick();
@@ -65,6 +66,21 @@ const CameraDisplay = ({
             ...prev,
             [detailType]: value
         }));
+    };
+
+    const initiateDelete = () => {
+        setIsConfirmingDelete(true);
+    };
+
+    const confirmDelete = () => {
+        const filteredDetails = boxesDetails.filter((_, i) => i !== selectedBox.index);
+        setBoxesDetails(filteredDetails);
+        setIsConfirmingDelete(false);
+        setSelectedBox(null);  // Reset selected box
+    };
+
+    const cancelDelete = () => {
+        setIsConfirmingDelete(false);
     };
 
     useEffect(() => {
@@ -233,6 +249,33 @@ const CameraDisplay = ({
                                     </div>
                             ))}
                             {selectedBox && (
+                                <div>
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '0%',
+                                        right: '19%',
+                                        backgroundColor: 'black',
+                                        padding: '5px',
+                                        border: '1px solid black',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        color: 'white'
+                                    }}>
+                                        {!isConfirmingDelete ? (
+                                            <button onClick={initiateDelete} style={{ padding: '5px 10px', marginRight: '10px' }}>
+                                                Delete
+                                            </button>
+                                        ) : (
+                                            <>
+                                                <button onClick={confirmDelete} style={{ padding: '5px 10px', marginRight: '10px', color: 'green' }}>
+                                                    ✔ Confirm
+                                                </button>
+                                                <button onClick={cancelDelete} style={{ padding: '5px 10px', marginRight: '10px', color: 'red' }}>
+                                                    ✖ Cancel
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 <div
                                     style={{
                                         position: 'absolute',
@@ -272,6 +315,7 @@ const CameraDisplay = ({
                                             onChange={(e) => handleDetailChange('number', e.target.value)}
                                         />
                                     </React.Fragment>
+                                </div>
                                 </div>
                             )}
                         </div>
