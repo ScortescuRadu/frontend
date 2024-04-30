@@ -23,8 +23,9 @@ const CameraDisplay = ({
         originalImageHeight}) => {
     const [showButtons, setShowButtons] = useState(true);
     const [selectedBox, setSelectedBox] = useState(null);
-    const mediaContainerRef = useRef(null); // Ref for the media container
+    const mediaContainerRef = useRef(null);
     const [mediaScale, setMediaScale] = useState({ scaleX: 1, scaleY: 1 });
+    const [boxesDetails, setBoxesDetails] = useState([]);
 
     const handleFindSpotsClick = () => {
         originalHandleFindSpotsClick();
@@ -37,12 +38,45 @@ const CameraDisplay = ({
     };
 
     const handleBoxClick = (index, box) => {
-        console.log(`Box ${index} clicked`, box);
-        setSelectedBox({index, ...box});
-        // Here you might trigger a modal or input form to fill in details
+        console.log(`Box ${index} clicked`, boxesDetails[index]);
+        setSelectedBox({
+            ...boxesDetails[index],
+            index
+        });
+        setBoxesDetails((prevDetails) =>
+        prevDetails.map((detail, i) => ({
+            ...detail,
+            selected: i === index
+        }))
+    );
+    };
+
+    const handleDetailChange = (detailType, value) => {
+        if (!selectedBox) return;
+        // console.log(`BoxIndex ${boxIndex} clicked`);
+        setBoxesDetails((prevDetails) =>
+        prevDetails.map((detail, i) =>
+            i === selectedBox.index ? { ...detail, [detailType]: value } : detail
+        )
+        );
+
+        // Also update the selectedBox state to reflect these changes immediately in the UI
+        setSelectedBox((prev) => ({
+            ...prev,
+            [detailType]: value
+        }));
     };
 
     useEffect(() => {
+        setBoxesDetails(
+            boundingBoxes.map((box, index) => ({
+                box,
+                level: 1,
+                letter: 'A',
+                number: 1,
+                selected: false,
+            }))
+        );
         // Calculate the scale factors when the component mounts or when the boundingBoxes update
         const calculateScale = () => {
           const container = mediaContainerRef.current;
@@ -121,7 +155,7 @@ const CameraDisplay = ({
                                             display: 'flex',
                                             justifyContent: 'center',
                                             alignItems: 'center',
-                                            zIndex: 2, // Make sure this is above all other content
+                                            zIndex: 2,
                                         }}>
                                             <div style={{
                                                 animation: 'shake 0.82s cubic-bezier(.36,.07,.19,.97) both',
@@ -172,33 +206,72 @@ const CameraDisplay = ({
                                     {showCurrentFrame ? 'Return to video' : 'Process'}
                                 </button>
                             )}
-                            {Array.isArray(boundingBoxes) && boundingBoxes.map((box, index) => (
-                                <div 
-                                    key={`box-${index}`} // Unique key for each child
-                                    style={{
-                                        position: 'absolute',
-                                        border: '2px solid red',
-                                        left: `${box[0] * mediaScale.scaleX}px`,
-                                        top: `${box[1] * mediaScale.scaleY}px`,
-                                        width: `${(box[2] - box[0]) * mediaScale.scaleX}px`,
-                                        height: `${(box[3] - box[1]) * mediaScale.scaleY}px`,
-                                        cursor: 'pointer',
-                                      }} 
-                                    onClick={() => handleBoxClick(index, box)}
-                                >
-                                </div>
+                            {Array.isArray(boxesDetails) &&
+                                boxesDetails.map((detail, index) => (
+                                    <div
+                                        key={`box-${index}`}
+                                        style={{
+                                            position: 'absolute',
+                                            border: detail.selected ? '3px solid blue' : '2px solid red',
+                                            left: `${detail.box[0] * mediaScale.scaleX}px`,
+                                            top: `${detail.box[1] * mediaScale.scaleY}px`,
+                                            width: `${(detail.box[2] - detail.box[0]) * mediaScale.scaleX}px`,
+                                            height: `${(detail.box[3] - detail.box[1]) * mediaScale.scaleY}px`,
+                                            cursor: 'pointer',
+                                        }}
+                                        onClick={() => handleBoxClick(index)}
+                                    >
+                                        <span style={{
+                                            fontSize: `${Math.min((detail.box[2] - detail.box[0]) * mediaScale.scaleX, (detail.box[3] - detail.box[1]) * mediaScale.scaleY) / 3}px`,
+                                            userSelect: 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            height: '100%' }}>
+                                            {`${detail.level}-${detail.letter}-${detail.number}`}
+                                        </span>
+                                    </div>
                             ))}
                             {selectedBox && (
-                                <div style={{
-                                    position: 'absolute',
-                                    top: 10,
-                                    right: 10,
-                                    backgroundColor: 'white',
-                                    padding: '5px',
-                                    border: '1px solid black'
-                                }}>
-                                    <p>Selected Box: {selectedBox.index}</p>
-                                    {/* Display any inputs or additional details here */}
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: '0%',
+                                        right: '0%',
+                                        backgroundColor: 'black',
+                                        padding: '10px',
+                                        border: '1px solid black',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        width: '20%',
+                                        color: 'white'
+                                    }}
+                                >
+                                    <React.Fragment>
+                                        {/* Level dropdown */}
+                                        <select
+                                            style={{ width: '30%', margin: '0 5px', backgroundColor: 'black' }}
+                                            value={selectedBox.level}
+                                            onChange={(e) => handleDetailChange('level', e.target.value)}
+                                        >
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                        </select>
+                                        {/* Letter input */}
+                                        <input
+                                            type="text"
+                                            style={{ width: '30%', margin: '0 5px', backgroundColor: 'black' }}
+                                            value={selectedBox.letter}
+                                            onChange={(e) => handleDetailChange('letter', e.target.value)}
+                                        />
+                                        {/* Number input */}
+                                        <input
+                                            type="number"
+                                            style={{ width: '30%', margin: '0 5px', backgroundColor: 'black' }}
+                                            value={selectedBox.number}
+                                            onChange={(e) => handleDetailChange('number', e.target.value)}
+                                        />
+                                    </React.Fragment>
                                 </div>
                             )}
                         </div>
