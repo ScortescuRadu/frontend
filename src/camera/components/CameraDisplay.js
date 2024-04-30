@@ -4,6 +4,7 @@ import Webcam from 'react-webcam';
 import VideoPlayer from '../VideoPlayer';
 import EntranceStream from '../EntranceStream';
 import test_video from '../tests/camera_test.mp4'
+import DrawingCanvas from './DrawingCanvas';
 
 const CameraDisplay = ({
         selectedOption,
@@ -27,6 +28,7 @@ const CameraDisplay = ({
     const [mediaScale, setMediaScale] = useState({ scaleX: 1, scaleY: 1 });
     const [boxesDetails, setBoxesDetails] = useState([]);
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+    const [isDrawingActive, setIsDrawingActive] = useState(false);
 
     const handleFindSpotsClick = () => {
         originalHandleFindSpotsClick();
@@ -82,6 +84,8 @@ const CameraDisplay = ({
     const cancelDelete = () => {
         setIsConfirmingDelete(false);
     };
+
+    const toggleDrawing = () => setIsDrawingActive(!isDrawingActive);
 
     useEffect(() => {
         setBoxesDetails(
@@ -139,7 +143,7 @@ const CameraDisplay = ({
                     {entranceSetup ? (
                         <EntranceStream videoRef={playerRef} localVideo={formData.localVideoPath} />
                     ) : (
-                        <div ref={mediaContainerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
+                        <div ref={mediaContainerRef} style={{ position: 'relative', width: '100%', height: '100%', userSelect: isDrawingActive ? 'none' : 'auto' }}>
                             {!showCurrentFrame ? (
                                 <ReactPlayer
                                     ref={playerRef}
@@ -152,11 +156,19 @@ const CameraDisplay = ({
                                     }}
                                 />
                             ) : (
-                                <img
+                                <>
+                                {isDrawingActive ? (
+                                    <DrawingCanvas
+                                        currentFrameImage={currentFrameImage}
+                                        onSave={(data) => console.log('Saved data:', data)}
+                                        onCancel={() => setIsDrawingActive(false)}
+                                    />
+                                ): (<img
                                     src={currentFrameImage}
                                     alt="Current Frame"
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                />
+                                />)}
+                                </>
                             )}
                             {showCurrentFrame && (
                                 <>
@@ -207,6 +219,7 @@ const CameraDisplay = ({
                                 </>
                             )}
                             {videoReady && (
+                                <>
                                 <button
                                     style={{
                                         position: 'absolute',
@@ -221,6 +234,21 @@ const CameraDisplay = ({
                                 >
                                     {showCurrentFrame ? 'Return to video' : 'Process'}
                                 </button>
+                                <button onClick={toggleDrawing}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '10%',
+                                            left: 0,
+                                            backgroundColor: 'black',
+                                            padding: '10px',
+                                            border: '1px solid black',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            color: 'white'
+                                        }}>
+                                    {isDrawingActive ? 'Stop Drawing' : 'Draw'}
+                                </button>
+                                </>
                             )}
                             {Array.isArray(boxesDetails) &&
                                 boxesDetails.map((detail, index) => (
@@ -233,7 +261,8 @@ const CameraDisplay = ({
                                             top: `${detail.box[1] * mediaScale.scaleY}px`,
                                             width: `${(detail.box[2] - detail.box[0]) * mediaScale.scaleX}px`,
                                             height: `${(detail.box[3] - detail.box[1]) * mediaScale.scaleY}px`,
-                                            cursor: 'pointer',
+                                            cursor: isDrawingActive ? 'default' : 'pointer',
+                                            pointerEvents: isDrawingActive ? 'none' : 'auto'
                                         }}
                                         onClick={() => handleBoxClick(index)}
                                     >
