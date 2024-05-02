@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { Flex } from '@chakra-ui/react';
 import { Paper, Typography, Grid, Button } from '@mui/material';
+import CommentsSection from './CommentsSection';
 
 const ArticlePage = () => {
   const [article, setArticle] = useState(null);
@@ -53,7 +54,7 @@ const ArticlePage = () => {
             </div>
           </Paper>
         </div>
-        <div style={{ backgroundColor: 'pink', color: '#fff', minHeight: '10vh', padding: '30px', border: '3px solid black', }}>
+        <div style={{ backgroundColor: 'black', color: '#fff', minHeight: '10vh', padding: '30px', border: '3px solid black', }}>
           <Typography variant="body1" paragraph style={{ maxWidth: '1200px', marginBottom: '15px' }}>
             {article.description}
           </Typography>
@@ -75,7 +76,7 @@ const ArticlePage = () => {
           </div>
         )}
         {article.description_1 && (
-          <div style={{ backgroundColor: 'snow', color: 'black', minHeight: '10vh', padding: '30px', border: '3px solid black', }}>
+          <div style={{ backgroundColor: 'black', color: 'white', minHeight: '10vh', padding: '30px', border: '3px solid black', }}>
             <Typography variant="body1" paragraph style={{ maxWidth: '1200px', marginBottom: '15px' }}>
               {article.description_1}
             </Typography>
@@ -83,7 +84,7 @@ const ArticlePage = () => {
         )}
         {article.cover_section_2 && (
         <div style={{ backgroundColor: 'white', color: '#fff', minHeight: '10vh', padding: '30px', border: '3px solid black' }}>
-          <Paper elevation={10} style={{ backgroundColor: 'purple', maxWidth: '1200px', padding: '20px', margin: '20px', position: 'relative', border: '3px solid black' }}>
+          <Paper elevation={10} style={{ backgroundColor: 'purple', color: 'white', maxWidth: '1200px', padding: '20px', margin: '20px', position: 'relative', border: '3px solid black' }}>
             <img
               src={getImageUrl(article.cover_section_2)}
               alt={article.title}
@@ -98,16 +99,14 @@ const ArticlePage = () => {
         </div>
         )}
         {article.description_2 && (
-          <div style={{ backgroundColor: 'grey', color: 'white', minHeight: '10vh', padding: '30px', border: '3px solid black' }}>
+          <div style={{ backgroundColor: 'black', color: 'white', minHeight: '10vh', padding: '30px', border: '3px solid black' }}>
             <Typography variant="body1" paragraph style={{ maxWidth: '1200px', marginBottom: '15px' }}>
               {article.description_2}
             </Typography>
           </div>
         )}
-        <div style={{ backgroundColor: 'snow', color: 'black', minHeight: '10vh', padding: '30px', border: '3px solid black', textAlign: 'center' }}>
-            <Typography variant="body1" paragraph style={{ maxWidth: '1200px', marginBottom: '15px' }}>
-              Comment Section
-            </Typography>
+        <div style={{ backgroundColor: 'black', color: 'black', minHeight: '10vh', padding: '30px', border: '3px solid black', textAlign: 'center' }}>
+          <CommentsSection />
         </div>
       </div>
     
