@@ -1,16 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardMedia, Typography, Button, Grid, Pagination } from '@mui/material';
+import { Card, CardContent, CardMedia, Typography, Button, Grid, Pagination, Skeleton, Box } from '@mui/material';
 import Masonry from '@mui/lab/Masonry';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import './NewsPage.css'
-import { Link } from 'react-router-dom'; // Import Link from React Router
+import { Link } from 'react-router-dom';
+import Slider from "react-slick";
+// import "slick-carousel/slick/slick.css"; 
+// import "slick-carousel/slick/slick-theme.css";
 
 const NewsPage = () => {
     const [articles, setArticles] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-  
+    const settings = {
+      dots: true,
+      infinite: true,
+      speed: 500,
+      slidesToShow: 1,
+      slidesToScroll: 1,
+      autoplay: true,
+      autoplaySpeed: 3000,
+      cssEase: "linear"
+    };
+
     useEffect(() => {
       const fetchData = async () => {
         try {
@@ -22,7 +35,7 @@ const NewsPage = () => {
           console.error('Error fetching data:', error);
         }
       };
-  
+
       fetchData();
     }, [currentPage]);
   
@@ -39,26 +52,81 @@ const NewsPage = () => {
     };
 
     return (
-      <div style={{ backgroundColor: '#84a18d', color: '#fff', minHeight: '10vh' }}>
-          <div style={{ height: '19px' }}/>
-          <Grid container spacing={2} justifyContent="flex-start">
-            <Grid item xs={12} lg={6} style={{ backgroundColor: '#faf75c', border: '2px solid black'}}>
-              <div style={{ flex: 1, padding: '10px', textAlign: 'center' }}>
-                <h2>Title</h2>
-                <Button variant="outlined" color="success">
-                  Click Me
-                </Button>
+      <div style={{ color: '#fff', minHeight: '10vh' }}>
+          <div style={{ height: '0px', backgroundColor: 'black' }}/>
+          <Slider {...settings}>
+          {articles.length > 0 ? articles.map((article, index) => (
+            <Card key={article.id} style={{ width: '100%' }}>
+              <Box style={{
+                position: 'relative',
+                height: '600px',
+                width: '100%',
+                backgroundImage: `url(${article.cover || 'path/to/default/image.jpg'})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}>
+                <Typography variant="h5" style={{
+                  position: 'absolute',
+                  bottom: 150,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  color: 'white',
+                  background: 'linear-gradient(45deg, #6a3093, #a044ff)', // Gradient from purple to bright violet
+                  padding: '5px 20px',
+                  borderRadius: '5px',
+                  textAlign: 'center',
+                  maxWidth: '80%',
+                  fontWeight: 'bold',
+                  fontSize: '1.5em', // Larger text size for impact
+                  textShadow: '2px 2px 8px rgba(0,0,0,0.6)'
+                }}>
+                  {article.title}
+                </Typography>
+                <Typography variant="overline" style={{
+                  position: 'absolute',
+                  top: 10,
+                  right: 10,
+                  color: '#fff',
+                  backgroundColor: 'rgba(0,0,0,0.7)',
+                  padding: '3px 7px',
+                  borderRadius: '5px',
+                  fontSize: '0.75em',
+                  fontWeight: 'bold',
+                  letterSpacing: '1px',
+                }}>
+                  {article.category}
+                </Typography>
+              </Box>
+            </Card>
+            )) : Array.from(new Array(5)).map((_, index) => (
+              <div key={index}>
+                <Skeleton variant="rectangular" width="100%" height={500}>
+                  <Skeleton
+                    variant="text"
+                    width="30%"
+                    height={50}
+                    style={{
+                      position: 'absolute',
+                      top: 10,
+                      left: 10,
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                    }}
+                  />
+                  <Skeleton
+                    variant="text"
+                    width="70%"
+                    height={60}
+                    style={{
+                      position: 'absolute',
+                      bottom: 20,
+                      left: '15%',
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                    }}
+                  />
+                </Skeleton>
               </div>
-            </Grid>
-            <Grid item xs={12}lg={6} style={{ backgroundColor: '#a8edc6', border: '2px solid black'}}>
-              <div style={{ flex: 1, padding: '10px', textAlign: 'center' }}>
-                <h2>Title</h2>
-                <Button variant="outlined" color="success">
-                  Click Me
-                </Button>
-              </div>
-            </Grid>
-          </Grid>
+            ))}
+          </Slider>
           <div style={{ height: '120px',
                         backgroundColor: '#000',
                         borderBottomLeftRadius: '30px',
@@ -80,8 +148,6 @@ const NewsPage = () => {
               }}
             />
           </div>
-          <div style={{ height: '40px' }}/> {/* Empty div for spacing */}
-          {/* <Grid container spacing={4} justifyContent="flex-start"> */}
           <Masonry
               columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}
               defaultHeight={450}

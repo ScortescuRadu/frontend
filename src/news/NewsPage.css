@@ -1,27 +1,51 @@
-.carousel-container {
-    position: relative;
-  }
-  
-  .carousel-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    color: #c32222; /* Set the text color to match your design */
-  }
-
 .card-image {
   width: '80%';
-  margin-top: '5%';
+  /* margin-top: '5%'; */
   height: '30%';
   margin: 'auto';
   justify-content: 'center';
-  border-radius: '10px';
+  /* border-radius: '10px'; */
+}
+
+.slick-dots li button:before {
+  color: white;  /* Change as needed for visibility */
+  opacity: 0.75;
+}
+
+.slick-dots li.slick-active button:before {
+  color: yellow; /* Change as needed for visibility */
 }
 
 @media (min-width: 1200px) {
     .card-class {
       max-width: 85%;
     }
+}
+
+.slick-slider .slick-list {
+  margin: 0;
+}
+
+.slick-slider .slick-track {
+  display: flex;
+  align-items: center;
+}
+
+.slick-slider {
+  margin-bottom: -9px;
+}
+
+.slick-dots {
+  position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 25px;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
 }
