@@ -209,10 +209,10 @@ const CommentsSection = () => {
     <Paper style={{ padding: '20px', marginTop: '20px' }}>
       <Typography variant="h6">Comments</Typography>
       {comments && comments.map((comment, index) => (
-        <Paper key={index} style={{ padding: '10px', margin: '10px 0' }}>
+        <Paper key={index} style={{ padding: '20px', margin: '20px 0', background: '#f0f0f0' }}>
           <Typography variant="subtitle2">{comment.username} - {new Date(comment.timestamp).toLocaleString()}</Typography>
           <Typography paragraph>{comment.text}</Typography>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <IconButton onClick={() => toggleLike(index, false)} color={comment.liked ? "primary" : "default"}>
               <ThumbUpIcon />
             </IconButton>
@@ -241,9 +241,10 @@ const CommentsSection = () => {
             </>
           )}
           {comment.replies.map((reply, replyIdx) => (
-            <Paper key={replyIdx} style={{ marginLeft: '20px', padding: '10px' }}>
-              <Typography>{reply.username}: {reply.text} - {new Date(reply.timestamp).toLocaleString()}</Typography>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Paper key={replyIdx} style={{ marginLeft: '40px', padding: '10px', background: '#e0e0e0' }}>
+              <Typography>{reply.username} - {new Date(reply.timestamp).toLocaleString()}</Typography>
+              <Typography style={{ marginTop: '5px' }}>{reply.text}</Typography>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <IconButton onClick={() => toggleLike(index, true, replyIdx)} color={reply.liked ? "primary" : "default"}>
                   <ThumbUpIcon />
                 </IconButton>
@@ -263,7 +264,7 @@ const CommentsSection = () => {
         value={newComment}
         onChange={(event) => setNewComment(event.target.value)}
         variant="outlined"
-        style={{ marginBottom: '10px' }}
+        style={{ marginBottom: '20px' }}
       />
       <Button onClick={postComment} variant="contained" color="primary">
         Post Comment
