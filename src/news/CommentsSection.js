@@ -28,12 +28,20 @@ const CommentsSection = () => {
         if (Array.isArray(data)) {
           setComments(data.map(comment => ({
             ...comment,
-            replies: comment.replies || [],
-            replyText: '',
-            showReply: false,
             liked: false,
-            disliked: false
-          })));
+            disliked: false,
+            likes: comment.likes || 0,
+            dislikes: comment.dislikes || 0,
+            replies: comment.replies.map(reply => ({
+                ...reply,
+                liked: false,
+                disliked: false,
+                likes: reply.likes || 0,
+                dislikes: reply.dislikes || 0
+                })) || [],
+                replyText: '',
+                showReply: false
+            })));
         } else {
           console.error('Data is not an array:', data);
           setComments([]);
@@ -49,51 +57,79 @@ const CommentsSection = () => {
   const toggleLike = (index, isReply, replyIndex) => {
     setComments(prevComments => prevComments.map((comment, idx) => {
       if (idx === index) {
-        if (isReply && comment.replies[replyIndex]) {
-          let reply = comment.replies[replyIndex];
-          let updatedReply = {
-            ...reply,
-            likes: reply.liked ? reply.likes - 1 : reply.likes + 1,
-            liked: !reply.liked,
-            disliked: false
-          };
-          let newReplies = [...comment.replies];
-          newReplies[replyIndex] = updatedReply;
-          return { ...comment, replies: newReplies };
-        } else if (!isReply) {
-          return {
-            ...comment,
-            likes: comment.liked ? comment.likes - 1 : comment.likes + 1,
-            liked: !comment.liked,
-            disliked: false
-          };
+        if (isReply) {
+          // Handling replies
+          const replies = comment.replies.map((reply, idx) => {
+            if (idx === replyIndex) {
+              if (reply.liked) {
+                return { ...reply, liked: false, likes: reply.likes - 1 };
+              } else {
+                return {
+                  ...reply,
+                  liked: true,
+                  likes: reply.likes + 1,
+                  disliked: false,
+                  dislikes: reply.disliked ? reply.dislikes - 1 : reply.dislikes
+                };
+              }
+            }
+            return reply;
+          });
+          return { ...comment, replies };
+        } else {
+          // Handling top-level comments
+          if (comment.liked) {
+            return { ...comment, liked: false, likes: comment.likes - 1 };
+          } else {
+            return {
+              ...comment,
+              liked: true,
+              likes: comment.likes + 1,
+              disliked: false,
+              dislikes: comment.disliked ? comment.dislikes - 1 : comment.dislikes
+            };
+          }
         }
       }
       return comment;
     }));
   };
-
+  
   const toggleDislike = (index, isReply, replyIndex) => {
     setComments(prevComments => prevComments.map((comment, idx) => {
       if (idx === index) {
-        if (isReply && comment.replies[replyIndex]) {
-          let reply = comment.replies[replyIndex];
-          let updatedReply = {
-            ...reply,
-            dislikes: reply.disliked ? reply.dislikes - 1 : reply.dislikes + 1,
-            disliked: !reply.disliked,
-            liked: false
-          };
-          let newReplies = [...comment.replies];
-          newReplies[replyIndex] = updatedReply;
-          return { ...comment, replies: newReplies };
-        } else if (!isReply) {
-          return {
-            ...comment,
-            dislikes: comment.disliked ? comment.dislikes - 1 : comment.dislikes + 1,
-            disliked: !comment.disliked,
-            liked: false
-          };
+        if (isReply) {
+          // Handling replies
+          const replies = comment.replies.map((reply, idx) => {
+            if (idx === replyIndex) {
+              if (reply.disliked) {
+                return { ...reply, disliked: false, dislikes: reply.dislikes - 1 };
+              } else {
+                return {
+                  ...reply,
+                  disliked: true,
+                  dislikes: reply.dislikes + 1,
+                  liked: false,
+                  likes: reply.liked ? reply.likes - 1 : reply.likes
+                };
+              }
+            }
+            return reply;
+          });
+          return { ...comment, replies };
+        } else {
+          // Handling top-level comments
+          if (comment.disliked) {
+            return { ...comment, disliked: false, dislikes: comment.dislikes - 1 };
+          } else {
+            return {
+              ...comment,
+              disliked: true,
+              dislikes: comment.dislikes + 1,
+              liked: false,
+              likes: comment.liked ? comment.likes - 1 : comment.likes
+            };
+          }
         }
       }
       return comment;
@@ -105,7 +141,7 @@ const CommentsSection = () => {
     const commentData = {
         text: newComment,
         articleId: id,
-        username: "CurrentUser", // Simulate user data
+        username: "CurrentUser",
         timestamp: new Date().toISOString(),
         likes: 0,
         dislikes: 0,
@@ -161,9 +197,13 @@ const CommentsSection = () => {
     }
   
     const newReply = {
-      username: "CurrentUser",
-      text: comment.replyText,
-      timestamp: new Date().toISOString()
+        username: "CurrentUser",
+        text: comment.replyText,
+        timestamp: new Date().toISOString(),
+        likes: 0,
+        dislikes: 0,
+        liked: false,
+        disliked: false 
     };
   
     // Optimistic update
@@ -208,6 +248,17 @@ const CommentsSection = () => {
   return (
     <Paper style={{ padding: '20px', marginTop: '20px' }}>
       <Typography variant="h6">Comments</Typography>
+      <TextField
+        fullWidth
+        label="Write a comment"
+        value={newComment}
+        onChange={(event) => setNewComment(event.target.value)}
+        variant="outlined"
+        style={{ marginBottom: '20px' }}
+      />
+      <Button onClick={postComment} variant="contained" color="primary">
+        Post Comment
+      </Button>
       {comments && comments.map((comment, index) => (
         <Paper key={index} style={{ padding: '20px', margin: '20px 0', background: '#f0f0f0' }}>
           <Typography variant="subtitle2">{comment.username} - {new Date(comment.timestamp).toLocaleString()}</Typography>
@@ -258,17 +309,6 @@ const CommentsSection = () => {
           ))}
         </Paper>
       ))}
-      <TextField
-        fullWidth
-        label="Write a comment"
-        value={newComment}
-        onChange={(event) => setNewComment(event.target.value)}
-        variant="outlined"
-        style={{ marginBottom: '20px' }}
-      />
-      <Button onClick={postComment} variant="contained" color="primary">
-        Post Comment
-      </Button>
       <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
         <MuiAlert onClose={handleSnackbarClose} severity="error" elevation={6} variant="filled">
           {snackbarMessage}
