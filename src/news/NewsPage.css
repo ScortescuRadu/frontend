@@ -7,6 +7,14 @@
   /* border-radius: '10px'; */
 }
 
+.text-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Limits the text to three lines, adjust as needed */
+  -webkit-box-orient: vertical;
+}
+
 .slick-dots li button:before {
   color: white;  /* Change as needed for visibility */
   opacity: 0.75;

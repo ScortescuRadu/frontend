@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardMedia, Typography, Button, Grid, Pagination, Skeleton, Box } from '@mui/material';
 import Masonry from '@mui/lab/Masonry';
+import { useTheme, useMediaQuery } from '@mui/material';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import './NewsPage.css'
@@ -65,6 +66,7 @@ const NewsPage = () => {
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
               }}>
+                <Link to={`/news/article?id=${article.id}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
                 <Typography variant="h5" style={{
                   position: 'absolute',
                   bottom: 150,
@@ -82,6 +84,7 @@ const NewsPage = () => {
                 }}>
                   {article.title}
                 </Typography>
+                </Link>
                 <Typography variant="overline" style={{
                   position: 'absolute',
                   top: 10,
@@ -127,26 +130,138 @@ const NewsPage = () => {
               </div>
             ))}
           </Slider>
-          <div style={{ height: '120px',
-                        backgroundColor: '#000',
+          <div style={{ backgroundColor: '#fcba03',
+                        color: '#fff', paddingBottom: '20px',
                         borderBottomLeftRadius: '30px',
                         borderBottomRightRadius: '30px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
+                        marginBottom: '30px',
                       }}>
-            <input
-              type="text"
-              placeholder="Search..."
+            <div style={{ height: '120px',
+                          backgroundColor: '#000',
+                          borderBottomLeftRadius: '30px',
+                          borderBottomRightRadius: '30px',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}>
+              <input
+                type="text"
+                placeholder="Search..."
+                style={{
+                    padding: '8px',
+                    fontSize: '16px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    width: '50%',
+                    color: 'black'
+                }}
+              />
+            </div>
+            <Typography
+              variant="h4"
               style={{
-                  padding: '8px',
-                  fontSize: '16px',
-                  borderRadius: '4px',
-                  border: 'none',
-                  width: '50%',
-                  color: 'black'
+                textAlign: 'center',
+                marginBottom: '20px',
+                marginTop: '20px',
+                fontWeight: 'bold',
+                color: 'white',
+                fontSize: '2.5rem',
+                textShadow: '2px 2px 8px rgba(0, 0, 0, 0.5)'
               }}
-            />
+            >
+              Top Articles
+            </Typography>
+              <Grid container spacing={2}
+                style={{
+                  maxWidth: '1000px',
+                  width: '90%',
+                  margin: '0 auto',
+                  backgroundColor: '#fcba03',
+                  paddingBottom: '20px',
+                  borderBottomLeftRadius: '30px',
+                  borderBottomRightRadius: '30px'
+                }}>
+                {articles.length > 0 ? articles.slice(0, 5).map((article, index) => (
+                  <Grid item xs={12} md={12} key={article.id}>
+                    <Card style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'stretch',
+                        backgroundColor: 'white',
+                        borderRadius: '10px',
+                        border: '2px solid black',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                        textAlign: 'left',
+                      }}>
+                      <Link to={`/news/article?id=${article.id}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                      <Box component="div" style={{ display: 'flex', width: '100%' }}>
+                      <CardMedia
+                        component="img"
+                        image={article.cover || 'path/to/default/image.jpg'}
+                        alt={article.title}
+                        style={{
+                          width: '45%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          alignSelf: 'stretch',
+                        }}
+                      />
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-around',
+                        flexGrow: 1,
+                        padding: '10px',
+                        minHeight: '100%',
+                      }}>
+                        <Typography variant="h6" style={{
+                            fontWeight: 'bold',
+                            color: '#333',
+                            fontSize: '1.2rem',
+                            marginBottom: '5px',
+                            textTransform: 'uppercase'
+                          }} className="text-content">
+                          {article.title}
+                        </Typography>
+                        <Typography variant="body2" style={{
+                            color: '#666',
+                            fontSize: '1rem',
+                          }} className="text-content">
+                          {article.description}
+                        </Typography>
+                      </div>
+                      </Box>
+                      </Link>
+                    </Card>
+                  </Grid>
+              )) : Array.from(new Array(5)).fill(0).map((_, index) => (
+                <Grid item xs={12} md={12} key={index}>
+                  <Card style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'stretch',
+                      backgroundColor: 'white',
+                      borderRadius: '10px',
+                      border: '2px solid black',
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                      textAlign: 'left',
+                      height: '200px', // Specify a fixed height similar to that of the populated cards
+                    }}>
+                    <Skeleton variant="rectangular" width="45%" height="100%" />
+                    <div style={{
+                      flexGrow: 1,
+                      padding: '10px',
+                    }}>
+                      <Skeleton variant="text" height={30} width="80%" style={{ marginBottom: '10px' }} />
+                      <Skeleton variant="text" height={20} width="90%" />
+                      <Skeleton variant="text" height={20} width="85%" />
+                    </div>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
           </div>
           <Masonry
               columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}
@@ -155,7 +270,7 @@ const NewsPage = () => {
               defaultSpacing={1}
               spacing={{ xs: 1, sm: 2, md: 3, lg: 4 }}
           >
-            {articles.map((article) => (
+            {articles.length > 0 ? articles.map((article) => (
               <Grid item key={article.id} xs={12} sm={6} md={4} lg={3}>
                 <Card
                   style={{
@@ -193,8 +308,8 @@ const NewsPage = () => {
                       order: 1,
                       display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'center', // Center the content vertically
-                      alignItems: 'center', // Center the content horizontally
+                      justifyContent: 'center',
+                      alignItems: 'center',
                     }}
                   >
                     <Typography
@@ -204,7 +319,7 @@ const NewsPage = () => {
                         paddingLeft: '18px',
                         paddingRight: '18px',
                         fontWeight: 'bold',
-                        fontSize: '1.2em',  // Adjust the value for the desired font size
+                        fontSize: '1.2em',
                       }}
                     >
                       {article.title}
@@ -228,6 +343,27 @@ const NewsPage = () => {
                         </Button>
                     </Link>
                   </CardContent>
+                </Card>
+              </Grid>
+            )) : Array.from(new Array(8)).map((_, index) => (
+              <Grid item key={index} xs={12} sm={6} md={4} lg={3}>
+                <Card
+                  style={{
+                    width: '99%',
+                    height: '300px', // Adjust according to your design needs
+                    display: 'flex',
+                    flexDirection: 'column',
+                    margin: 'auto',
+                    border: '2px solid black',
+                    borderRadius: '10px',
+                    backgroundColor: 'white'
+                  }}
+                  variant='outlined'
+                >
+                  <Skeleton variant="rectangular" height={180} style={{ marginBottom: '10px' }} />
+                  <Skeleton variant="text" height={28} width="80%" style={{ marginBottom: '6px' }} />
+                  <Skeleton variant="text" height={20} width="90%" />
+                  <Skeleton variant="text" height={20} width="60%" />
                 </Card>
               </Grid>
             ))}
