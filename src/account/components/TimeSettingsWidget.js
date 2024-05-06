@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { Card, CardContent, Typography, TextField, IconButton, Grid, Divider } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, Typography, TextField, IconButton, Grid, Divider, CircularProgress } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 
-const TimeSettingsWidget = () => {
+const TimeSettingsWidget = ({openingWeekdays, closingWeekdays, openingWeekends, closingWeekends, isLoading}) => {
     const initialTimes = {
-        weekdayOpening: '09:00',
-        weekdayClosing: '17:00',
-        weekendOpening: '10:00',
-        weekendClosing: '14:00'
+        weekdayOpening: openingWeekdays,
+        weekdayClosing: closingWeekdays,
+        weekendOpening: openingWeekends,
+        weekendClosing: closingWeekends
     };
 
     const [editMode, setEditMode] = useState(false);
@@ -31,16 +31,63 @@ const TimeSettingsWidget = () => {
 
     const handleSave = () => {
         setEditMode(false);
-        // Here you would send the updated times to the API
         console.log('Saving new times:', times);
+
+        const formatTime = (time) => {
+            const [hours, minutes] = time.split(':');
+            return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
+        };
+        const formattedTimes = {
+            weekdayOpening: times.weekdayOpening ? formatTime(times.weekdayOpening) : null,
+            weekdayClosing: times.weekdayClosing ? formatTime(times.weekdayClosing) : null,
+            weekendOpening: times.weekendOpening ? formatTime(times.weekendOpening) : null,
+            weekendClosing: times.weekendClosing ? formatTime(times.weekendClosing) : null
+        };
+
+        const url = 'http://localhost:8000/parking/times-update/';
+        const requestBody = {
+            token: localStorage.getItem("access_token"),
+            times: formattedTimes,
+            street_address: localStorage.getItem("selectedAddressOption")
+        };
+
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify(requestBody)
+        };
+        fetch(url, requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update times');
+                }
+                console.log('Times updated successfully');
+            })
+            .catch(error => {
+                console.error('Error updating times:', error);
+            });
     };
 
     const handleCancel = () => {
-        // Reset changes by re-fetching or undoing local edits if not yet saved
-        // For simplicity, we will not implement this in this example
         setTimes(originalTimes);
         setEditMode(false);
     };
+
+    useEffect(() => {
+        if (openingWeekdays !== null && !isLoading) {
+            const initialTimes = {
+                weekdayOpening: openingWeekdays,
+                weekdayClosing: closingWeekdays,
+                weekendOpening: openingWeekends,
+                weekendClosing: closingWeekends
+            };
+            setOriginalTimes(initialTimes);
+            setTimes(initialTimes);
+        }
+    }, [openingWeekdays, isLoading]);
 
     const TimeDisplay = ({ time, label }) => (
         <Typography variant="body1" sx={{ marginY: 1 }}>
@@ -84,6 +131,10 @@ const TimeSettingsWidget = () => {
             }
         }}>
             <CardContent>
+                {isLoading ? (
+                    <CircularProgress />
+                ) : (
+                <>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                     <Typography sx={{ fontSize: 18, fontWeight: 'bold', color: '#333' }} gutterBottom>
                         Operating Hours
@@ -134,6 +185,7 @@ const TimeSettingsWidget = () => {
                         )}
                     </Grid>
                 </Grid>
+                </>)}
             </CardContent>
         </Card>
     );

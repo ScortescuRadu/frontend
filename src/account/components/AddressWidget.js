@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { Card, CardContent, Typography, TextField, IconButton, Box } from '@mui/material';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Card, CardContent, Typography, TextField, IconButton, Box, CircularProgress } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -10,13 +10,11 @@ const containerStyle = {
     height: '200px'
 };
 
-const center = { lat: 45.754364, lng: 21.226750 };
-
-const AddressWidget = () => {
+const AddressWidget = ({initialLat, initialLng, isFetchLoading}) => {
     const [map, setMap] = useState(null);
     const [editMode, setEditMode] = useState(false);
     const [address, setAddress] = useState('');
-    const [selectedPlace, setSelectedPlace] = useState(center);
+    const [selectedPlace, setSelectedPlace] = useState({lat: initialLat, lng: initialLng});
 
     const { isLoaded } = useJsApiLoader({
         googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
@@ -47,11 +45,50 @@ const AddressWidget = () => {
 
     const handleConfirm = () => {
         setEditMode(false);
+        localStorage.setItem('selectedAddressOption', address);
+        const url = 'http://localhost:8000/parking/address-update/';
+
+        const requestBody = {
+            token: localStorage.getItem("access_token"),
+            new_latitude: selectedPlace.lat,
+            new_longitude: selectedPlace.lng,
+            new_address: address,
+            street_address: localStorage.getItem("selectedAddressOption")
+        };
+
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify(requestBody)
+        };
+        fetch(url, requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update address');
+                }
+                console.log('Adress updated successfully');
+            })
+            .catch(error => {
+                console.error('Error updating address:', error);
+            });
     };
 
     const handleCancel = () => {
         setEditMode(false);
     };
+
+    useEffect(() => {
+        console.log("Initial Lat, Lng:", initialLat, initialLng);
+        console.log("isLoaded:", isLoaded);
+        console.log("isFetchLoading:", isFetchLoading);
+        if (initialLat !== null && !isFetchLoading) {
+            const center = { lat: initialLat, lng: initialLng };
+            setSelectedPlace(center)
+        }
+    }, [initialLat, initialLng, isFetchLoading, isLoaded]);
 
     return (
         <Card sx={{
@@ -73,6 +110,10 @@ const AddressWidget = () => {
             }
         }}>
             <CardContent sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {isFetchLoading? (
+                    <CircularProgress />
+                ) : (
+                <>
                 <Typography sx={{ flexGrow: 1, textAlign: 'left', fontSize: 16, fontWeight: 'medium', color: '#333' }} gutterBottom>
                     Address
                 </Typography>
@@ -92,8 +133,9 @@ const AddressWidget = () => {
                         </IconButton>
                     )}
                 </Box>
+                </>)}
             </CardContent>
-            {editMode && isLoaded && (
+            {editMode && isLoaded && !isFetchLoading && (
                 <div style={{ visibility: editMode ? 'visible' : 'hidden' }}>
                     <Autocomplete onLoad={handleLoad}>
                         <TextField
@@ -108,7 +150,11 @@ const AddressWidget = () => {
                     </Autocomplete>
                 </div>
             )}
-            {isLoaded && (
+            {isFetchLoading? (
+                    <CircularProgress />
+            ) : (
+            <>
+            {isLoaded &&(
                 <GoogleMap
                     mapContainerStyle={containerStyle}
                     center={selectedPlace}
@@ -124,6 +170,7 @@ const AddressWidget = () => {
                     <Marker position={selectedPlace} />
                 </GoogleMap>
             )}
+            </>)}
         </Card>
     );
 };

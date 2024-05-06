@@ -21,27 +21,29 @@ const ParkingLotInfo= () => {
         const fetchUserData = async () => {
           try {
               const access_token = localStorage.getItem("access_token")
-              const response = await fetch(`http://localhost:8000/parking/details/?token=${access_token}`, {
-              method: 'GET',
+              const streetAddress = localStorage.getItem("selectedAddressOption");
+
+              const response = await fetch(`http://localhost:8000/parking/lot-details/?token=${access_token}`, {
+              method: 'POST',
               headers: {
                   "Content-Type": "application/json",
                   'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
                 },
-              // credentials: 'include',
               body: JSON.stringify({
                   token: access_token,
+                  street_address: streetAddress !== "" ? streetAddress : ""
               }),
             });
-    
+
             const data = await response.json();
             console.log('info:')
             console.log(data)
-    
+            setUserData(data)
           } catch (error) {
             console.error('Error fetching user data:', error);
           }
         };
-    
+
         fetchUserData();
       }, []);
 
@@ -91,12 +93,26 @@ const ParkingLotInfo= () => {
     return (
        <div style={{ padding: '20px', backgroundColor: '#62728c' }}>
             <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={4}>
-                <CityCardWidget cityName={'Timisoara'}/>
-                <PriceWidget price={2.00} />
-                <PhoneNumberWidget initialPhoneNumber="123-456-7890" />
-                <TimeSettingsWidget />
-                <CapacityWidget capacity={100} occupied={34} reserved={25}/>
-                <AddressWidget />
+                <CityCardWidget cityName={userData.cityName}/>
+                <PriceWidget price={userData.price ? userData.price : 0} isLoading={!userData.price}/>
+                <PhoneNumberWidget initialPhoneNumber={userData.phone_number ? userData.phone_number : ""} isLoading={!userData.phone_number}/>
+                <TimeSettingsWidget
+                  openingWeekdays={userData.weekday_opening_time ? userData.weekday_opening_time : ""}
+                  closingWeekdays={userData.weekday_closing_time ? userData.weekday_closing_time : ""}
+                  openingWeekends={userData.weekend_opening_time ? userData.weekend_opening_time: ""}
+                  closingWeekends={userData.weekend_closing_time ? userData.weekend_closing_time : ""}
+                  isLoading={!userData.weekday_opening_time}/>
+                <CapacityWidget
+                  capacity={userData.capacity ? userData.capacity : null}
+                  occupied={34}
+                  reserved={25}
+                  isLoading={!userData.capacity}
+                />
+                <AddressWidget
+                  initialLat={userData.latitude ? parseFloat(userData.latitude) : null}
+                  initialLng={userData.longitude ? parseFloat(userData.longitude) : null}
+                  isFetchLoading={!(userData.latitude && userData.longitude)}
+                />
                 <EarningsWidget monthlyData={monthlyData} yearlyData={yearlyData} totalEarnings={totalEarnings} />
                 <OccupancyWidget dailyData={dailyData} weeklyData={weeklyData} />
                 <QrCodeWidget />

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Card, CardContent, Typography, IconButton, Button, LinearProgress, Box } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, Typography, IconButton, Button, LinearProgress, Box, CircularProgress } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
 
-const CapacityWidget = ({ capacity, occupied, reserved }) => {
+const CapacityWidget = ({ capacity, occupied, reserved, isLoading }) => {
     const numericCapacity = Number(capacity);
     const numericOccupied = Number(occupied);
     const numericReserved = Number(reserved);
@@ -48,14 +48,46 @@ const CapacityWidget = ({ capacity, occupied, reserved }) => {
     const handleConfirm = () => {
         setCurrentCapacity(editedCapacity);
         setShowConfirm(false);
-        // Here you would send the new capacity to the API
         console.log('Confirmed new capacity:', editedCapacity);
+        const url = 'http://localhost:8000/parking/capacity-update/';
+
+        const requestBody = {
+            token: localStorage.getItem("access_token"),
+            capacity: editedCapacity,
+            street_address: localStorage.getItem("selectedAddressOption")
+        };
+
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify(requestBody)
+        };
+        fetch(url, requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update price');
+                }
+                console.log('Price updated successfully');
+            })
+            .catch(error => {
+                console.error('Error updating price:', error);
+            });
     };
 
     const handleCancel = () => {
         setEditedCapacity(currentCapacity);
         setShowConfirm(false);
     };
+
+    useEffect(() => {
+        if (capacity !== null && !isLoading) {
+            setCurrentCapacity(parseInt(capacity));
+            setEditedCapacity(parseInt(capacity));
+        }
+    }, [capacity, isLoading]);
 
     return (
         <Card sx={{
@@ -80,6 +112,10 @@ const CapacityWidget = ({ capacity, occupied, reserved }) => {
                 textAlign: 'center',
                 width: '100%'
             }}>
+                {isLoading ? (
+                    <CircularProgress />
+                ) : (
+                <>
                 <Typography sx={{ fontSize: 16, fontWeight: 'medium', color: '#333', marginBottom: 1 }} gutterBottom>
                     Maximum Capacity
                 </Typography>
@@ -118,6 +154,7 @@ const CapacityWidget = ({ capacity, occupied, reserved }) => {
                     <Typography variant="body2">Reserved: {`${reservedCapacity.toFixed(2)}%`}</Typography>
                     <LinearProgress variant="determinate" value={reservedCapacity} color="secondary" />
                 </Box>
+                </>)}
             </CardContent>
         </Card>
     );

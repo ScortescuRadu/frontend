@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Card, CardContent, Typography, IconButton, Button } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, Typography, IconButton, Button, CircularProgress } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
 
-const PriceWidget = ({ price }) => {
+const PriceWidget = ({ price, isLoading }) => {
     const [currentPrice, setCurrentPrice] = useState(price);
     const [editedPrice, setEditedPrice] = useState(price);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -27,8 +27,33 @@ const PriceWidget = ({ price }) => {
     const handleConfirm = () => {
         setCurrentPrice(editedPrice);
         setShowConfirm(false);
-        // Here you would send the new price to the API
         console.log('Confirmed new price:', editedPrice);
+        const url = 'http://localhost:8000/parking/price-update/';
+
+        const requestBody = {
+            token: localStorage.getItem("access_token"),
+            price: editedPrice,
+            street_address: localStorage.getItem("selectedAddressOption")
+        };
+
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify(requestBody)
+        };
+        fetch(url, requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update price');
+                }
+                console.log('Price updated successfully');
+            })
+            .catch(error => {
+                console.error('Error updating price:', error);
+            });
     };
 
     const handleCancel = () => {
@@ -36,8 +61,16 @@ const PriceWidget = ({ price }) => {
         setShowConfirm(false);
     };
 
+    useEffect(() => {
+        if (price !== null && !isLoading) {
+            setCurrentPrice(parseFloat(price));
+            setEditedPrice(parseFloat(price));
+        }
+    }, [price, isLoading]);
+
     return (
         <Card sx={{
+            key: {price},
             minWidth: 130,
             minHeight: 140, // Adjusted height to better fit stacked buttons
             backgroundColor: '#ffffff',
@@ -64,6 +97,10 @@ const PriceWidget = ({ price }) => {
                 textAlign: 'center',
                 width: '100%'
             }}>
+                {isLoading ? (
+                    <CircularProgress />
+                ) : (
+                <>
                 <Typography sx={{ fontSize: 16, fontWeight: 'medium', color: '#333', marginBottom: 1 }} gutterBottom>
                     Price per Hour
                 </Typography>
@@ -73,7 +110,7 @@ const PriceWidget = ({ price }) => {
                     color: '#1a1a1a',
                     marginBottom: 2 // Added some margin-bottom for spacing
                 }}>
-                    {editedPrice.toFixed(2)} EUR
+                    {editedPrice !== null ? `${editedPrice.toFixed(2)} EUR` : 'Price not available'}
                 </Typography>
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
                     <IconButton onClick={handleIncrease}>
@@ -92,6 +129,8 @@ const PriceWidget = ({ price }) => {
                             Cancel
                         </Button>
                     </div>
+                )}
+                </>
                 )}
             </CardContent>
         </Card>

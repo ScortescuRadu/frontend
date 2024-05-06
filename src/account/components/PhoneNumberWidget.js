@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Card, CardContent, Typography, IconButton, TextField, Button } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, Typography, IconButton, TextField, Button, CircularProgress } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
 
-const PhoneNumberWidget = ({ initialPhoneNumber }) => {
+const PhoneNumberWidget = ({ initialPhoneNumber, isLoading }) => {
     const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
     const [editMode, setEditMode] = useState(false);
     const [editedPhoneNumber, setEditedPhoneNumber] = useState(initialPhoneNumber);
@@ -21,12 +21,44 @@ const PhoneNumberWidget = ({ initialPhoneNumber }) => {
     const handleConfirm = () => {
         setPhoneNumber(editedPhoneNumber);
         setEditMode(false);
-        // Optionally send the updated phone number to the server here
+        const url = 'http://localhost:8000/parking/phone-update/';
+
+        const requestBody = {
+            token: localStorage.getItem("access_token"),
+            phone: editedPhoneNumber,
+            street_address: localStorage.getItem("selectedAddressOption")
+        };
+
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify(requestBody)
+        };
+        fetch(url, requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update phone number');
+                }
+                console.log('Phone number updated successfully');
+            })
+            .catch(error => {
+                console.error('Error updating phone number:', error);
+            });
     };
 
     const handleChange = (event) => {
         setEditedPhoneNumber(event.target.value);
     };
+
+    useEffect(() => {
+        if (initialPhoneNumber !== null && !isLoading) {
+            setPhoneNumber(initialPhoneNumber);
+            setEditedPhoneNumber(initialPhoneNumber)
+        }
+    }, [initialPhoneNumber, isLoading]);
 
     return (
         <Card sx={{
@@ -53,6 +85,10 @@ const PhoneNumberWidget = ({ initialPhoneNumber }) => {
                 textAlign: 'center',
                 width: '100%'
             }}>
+                {isLoading ? (
+                    <CircularProgress />
+                ) : (
+                <>
                 <Typography sx={{ fontSize: 16, fontWeight: 'medium', color: '#333', marginBottom: 2 }} gutterBottom>
                     Phone Number
                 </Typography>
@@ -83,6 +119,8 @@ const PhoneNumberWidget = ({ initialPhoneNumber }) => {
                             </Button>
                         </div>
                     </div>
+                )}
+                </>
                 )}
             </CardContent>
         </Card>
