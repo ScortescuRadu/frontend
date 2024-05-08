@@ -106,7 +106,7 @@ const ArticlePage = () => {
           </div>
         )}
         <div style={{ backgroundColor: 'black', color: 'black', minHeight: '10vh', padding: '30px', border: '3px solid black', textAlign: 'center' }}>
-          <CommentsSection />
+          <CommentsSection articleId={id}/>
         </div>
       </div>
     
