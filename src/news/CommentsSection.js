@@ -118,9 +118,7 @@ const CommentsSection = ({articleId}) => {
       if (!response.ok) {
         throw new Error('Failed to toggle like');
       }
-  
-      const data = await response.json();
-  
+
       setComments(prevComments => prevComments.map(comment => {
         if (comment.id === (isReply ? parentId : commentId)) {
           if (isReply && comment.replies) {
@@ -181,9 +179,7 @@ const CommentsSection = ({articleId}) => {
       if (!response.ok) {
         throw new Error('Failed to toggle dislike');
       }
-  
-      const data = await response.json();
-  
+
       setComments(prevComments => prevComments.map(comment => {
         if (comment.id === (isReply ? parentId : commentId)) {
           if (isReply && comment.replies) {
@@ -390,11 +386,11 @@ const CommentsSection = ({articleId}) => {
               <Typography>{reply.username} - {new Date(reply.timestamp).toLocaleString()}</Typography>
               <Typography style={{ marginTop: '5px' }}>{reply.content}</Typography>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <IconButton onClick={() => toggleLike(reply.id, reply.liked, true)} color={reply.liked ? "primary" : "default"}>
+                <IconButton onClick={() => toggleLike(reply.id, reply.liked, true, comment.id)} color={reply.liked ? "primary" : "default"}>
                   <ThumbUpIcon />
                 </IconButton>
                 <span>{reply.likes}</span>
-                <IconButton onClick={() => toggleDislike(reply.id, reply.liked, true)} color={reply.disliked ? "secondary" : "default"}>
+                <IconButton onClick={() => toggleDislike(reply.id, reply.disliked, true, comment.id)} color={reply.disliked ? "secondary" : "default"}>
                   <ThumbDownIcon />
                 </IconButton>
                 <span>{reply.dislikes}</span>
