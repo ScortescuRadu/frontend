@@ -87,15 +87,80 @@ const CommentsSection = ({articleId}) => {
     fetchComments();
   }, [id, articleId]);
 
-  const toggleLike = async (commentId, isLiked, isReply, replyIndex) => {
+  const toggleLike = async (commentId, isLiked, isReply, parentId) => {
     if (!isLoggedIn) {
       setShowLoginPrompt(true);
       return;
     }
-
+  
     const url = `http://127.0.0.1:8000/comment/${commentId}/like/`;
-    const payload = { like: !isLiked };
-
+    const method = isLiked ? 'DELETE' : 'POST';
+    const payload = {
+      "access_token": localStorage.getItem("access_token")
+    }
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
+        },
+        body: JSON.stringify(payload)
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to toggle like');
+      }
+  
+      const data = await response.json();
+  
+      setComments(prevComments => prevComments.map(comment => {
+        if (comment.id === (isReply ? parentId : commentId)) {
+          if (isReply && comment.replies) {
+            return {
+              ...comment,
+              replies: comment.replies.map(reply => {
+                if (reply.id === commentId) {
+                  return {
+                    ...reply,
+                    liked: method === 'POST',
+                    dislikes: method === 'POST' && reply.disliked ? reply.dislikes - 1 : reply.dislikes,
+                    likes: method === 'POST' ? reply.likes + 1 : reply.likes - 1,
+                    disliked: method === 'POST' ? false : reply.disliked
+                  };
+                }
+                return reply;
+              })
+            };
+          }
+          return {
+            ...comment,
+            liked: method === 'POST',
+            dislikes: method === 'POST' && comment.disliked ? comment.dislikes - 1 : comment.dislikes,
+            likes: method === 'POST' ? comment.likes + 1 : comment.likes - 1,
+            disliked: method === 'POST' ? false : comment.disliked
+          };
+        }
+        return comment;
+      }));
+    } catch (error) {
+      console.error('Failed to post like:', error);
+      setSnackbarMessage("Failed to post like: " + error.message);
+      setSnackbarOpen(true);
+    }
+  };
+  
+  const toggleDislike = async (commentId, isDisliked, isReply, parentId) => {
+    if (!isLoggedIn) {
+      setShowLoginPrompt(true);
+      return;
+    }
+  
+    const url = `http://127.0.0.1:8000/comment/${commentId}/dislike/`;
+    const method = isDisliked ? 'DELETE' : 'POST';
+    const payload = {
+      "access_token": localStorage.getItem("access_token")
+    }
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -105,116 +170,39 @@ const CommentsSection = ({articleId}) => {
         },
         body: JSON.stringify(payload)
       });
-    
-      if (!response.ok) {
-        throw new Error('Failed to toggle like');
-      }
-
-    const data = await response.json();
-
-    setComments(prevComments => prevComments.map((comment, idx) => {
-      if (idx === commentId) {
-        if (isReply) {
-          // Handling replies
-          const replies = comment.replies.map((reply, idx) => {
-            if (idx === replyIndex) {
-              if (reply.liked) {
-                return { ...reply, liked: false, likes: reply.likes - 1 };
-              } else {
-                return {
-                  ...reply,
-                  liked: true,
-                  likes: reply.likes + 1,
-                  disliked: false,
-                  dislikes: reply.disliked ? reply.dislikes - 1 : reply.dislikes
-                };
-              }
-            }
-            return reply;
-          });
-          return { ...comment, replies };
-        } else {
-          // Handling top-level comments
-          if (comment.liked) {
-            return { ...comment, liked: false, likes: comment.likes - 1 };
-          } else {
-            return {
-              ...comment,
-              liked: true,
-              likes: comment.likes + 1,
-              disliked: false,
-              dislikes: comment.disliked ? comment.dislikes - 1 : comment.dislikes
-            };
-          }
-        }
-      }
-      return comment;
-    }));
-    } catch (error) {
-      console.error('Failed to post like:', error);
-      setSnackbarMessage("Failed to post like: " + error.message);
-      setSnackbarOpen(true);
-    }
-  };
   
-  const toggleDislike= async (commentId, isDisliked, isReply, replyIndex) => {
-    if (!isLoggedIn) {
-      setShowLoginPrompt(true);
-      return;
-    }
-    const url = `http://127.0.0.1:8000/comment/${commentId}/dislike/`;
-    const payload = { dislike: !isDisliked }; // Toggle the current state
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem("access_token")}` // Add your auth token if necessary
-        },
-        body: JSON.stringify(payload)
-      });
-
       if (!response.ok) {
         throw new Error('Failed to toggle dislike');
       }
-
+  
       const data = await response.json();
-      setComments(prevComments => prevComments.map((comment, idx) => {
-        if (idx === commentId) {
-          if (isReply) {
-            // Handling replies
-            const replies = comment.replies.map((reply, idx) => {
-              if (idx === replyIndex) {
-                if (reply.disliked) {
-                  return { ...reply, disliked: false, dislikes: reply.dislikes - 1 };
-                } else {
+  
+      setComments(prevComments => prevComments.map(comment => {
+        if (comment.id === (isReply ? parentId : commentId)) {
+          if (isReply && comment.replies) {
+            return {
+              ...comment,
+              replies: comment.replies.map(reply => {
+                if (reply.id === commentId) {
                   return {
                     ...reply,
-                    disliked: true,
-                    dislikes: reply.dislikes + 1,
-                    liked: false,
-                    likes: reply.liked ? reply.likes - 1 : reply.likes
+                    disliked: method === 'POST',
+                    likes: method === 'POST' && reply.liked ? reply.likes - 1 : reply.likes,
+                    dislikes: method === 'POST' ? reply.dislikes + 1 : reply.dislikes - 1,
+                    liked: method === 'POST' ? false : reply.liked
                   };
                 }
-              }
-              return reply;
-            });
-            return { ...comment, replies };
-          } else {
-            // Handling top-level comments
-            if (comment.disliked) {
-              return { ...comment, disliked: false, dislikes: comment.dislikes - 1 };
-            } else {
-              return {
-                ...comment,
-                disliked: true,
-                dislikes: comment.dislikes + 1,
-                liked: false,
-                likes: comment.liked ? comment.likes - 1 : comment.likes
-              };
-            }
+                return reply;
+              })
+            };
           }
+          return {
+            ...comment,
+            disliked: method === 'POST',
+            likes: method === 'POST' && comment.liked ? comment.likes - 1 : comment.likes,
+            dislikes: method === 'POST' ? comment.dislikes + 1 : comment.dislikes - 1,
+            liked: method === 'POST' ? false : comment.liked
+          };
         }
         return comment;
       }));
