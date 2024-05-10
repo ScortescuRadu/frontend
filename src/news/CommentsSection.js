@@ -46,7 +46,14 @@ const CommentsSection = ({articleId}) => {
 
     const fetchComments = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/comment/article/${articleId}/`);
+        const payload = {
+          "access_token": localStorage.getItem("access_token")
+        }
+        const response = await fetch(`http://127.0.0.1:8000/comment/article/${articleId}/`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        }); 
         const data = await response.json();
         console.log('comments:')
         console.log(data)
@@ -59,15 +66,15 @@ const CommentsSection = ({articleId}) => {
                 acc[parentIndex].replies = acc[parentIndex].replies || [];
                 acc[parentIndex].replies.push({
                   ...comment,
-                  liked: false,
-                  disliked: false,
+                  liked: comment.is_liked,
+                  disliked: comment.is_disliked
                 });
               }
             } else {
               acc.push({
                 ...comment,
-                liked: false,
-                disliked: false,
+                liked: comment.is_liked,
+                disliked: comment.is_disliked,
                 replies: [],
               });
             }
