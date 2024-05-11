@@ -8,6 +8,10 @@ import exampleImage from './assets/events.jpg';
 import ConfirmButton from './components/ConfirmButton';
 import InvoiceSelectionCard from './components/InvoiceSelectionCard';
 import { useNavigate } from 'react-router-dom';
+import support from './assets/support.jpg'
+import price from './assets/price.jpg'
+import payment from './assets/payment.jpg'
+import { formatDistanceToNowStrict, parseISO } from 'date-fns';  // Importing helper functions from date-fns
 
 
 const fetchCsrfToken = async () => {
@@ -23,18 +27,18 @@ const fetchCsrfToken = async () => {
 // Sample data for the images, titles, and text
 const imageData = [
     {
-      img: './path/to/image1.jpg',
-      title: 'First Image',
+      img: payment,
+      title: 'Easy Payment',
       text: 'Description for the first image.'
     },
     {
-      img: './path/to/image2.jpg',
-      title: 'Second Image',
+      img: price,
+      title: 'Perfect Plan',
       text: 'Description for the second image.'
     },
     {
-      img: './path/to/image3.jpg',
-      title: 'Third Image',
+      img: support,
+      title: '24/7 Support',
       text: 'Description for the third image.'
     }
   ];
@@ -121,6 +125,27 @@ const PaymentView = () => {
     const navigate = useNavigate();
     const [licensePlateInput, setLicensePlateInput] = useState('');
     const [selectedAddress, setSelectedAddress] = useState(null);
+    const [reservationTime, setReservationTime] = useState(null)
+
+    const isRecentReservation = () => {
+      const storedTime = localStorage.getItem('reservationTime');
+      if (!storedTime) return false;
+
+      const now = new Date();
+      const reservationDate = parseISO(storedTime);
+      const diffMinutes = (now - reservationDate) / (1000 * 60);
+
+      if (diffMinutes > 15) {
+          // If more than 15 minutes have passed, clear local storage and state
+          localStorage.removeItem('reservationTime');
+          localStorage.removeItem('reservationSpot');
+          localStorage.removeItem('reservationAddress');
+          setReservationTime(null);
+          return false;
+      }
+
+      return true;
+    };
 
     useEffect(() => {
         if (alignment === 'reserve') {
@@ -157,6 +182,17 @@ const PaymentView = () => {
             active = false;
         };
     }, [alignment, open]);
+
+    useEffect(() => {
+      const storedTime = localStorage.getItem('reservationTime');
+      if (storedTime) {
+          setReservationTime(storedTime);
+      }
+      if (isRecentReservation()) {
+          console.log('Reservation was made within the last 15 minutes.');
+          // Additional actions can be added here if necessary
+      }
+    }, [reservationTime]);  // Dependency array includes reservationTime
 
     useEffect(() => {
         const loadCities = async () => {
@@ -228,35 +264,28 @@ const PaymentView = () => {
         const csrfToken = localStorage.getItem('csrfToken');
         const headers = {
             'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken // Include the CSRF token in request headers
+            'X-CSRFToken': csrfToken
         };
 
         try {
             const response = await axios.post('http://127.0.0.1:8000/parking-invoice/license/unpaid/', {
-              license_plate: searchValue  // Corrected from 'licensePlate' to 'license_plate'
+              license_plate: searchValue
             }, { headers });
     
-            // Check the response status code for success (HTTP 200 OK)
             if (response.status === 200 && response.data.length > 0) {
                 setServerResponse(response.data);
                 setSelectedInvoice(null);
             } else {
-              // Handle non-200 responses
                 setErrorMessage('No unpaid invoices found for this license plate. Let\'s search!');
                 setServerResponse([]);
             }
         } catch (error) {
             if (error.response) {
-                // The request was made and the server responded with a status code
-                // that falls out of the range of 2xx
                 console.error('Search request failed:', error.response.data);
                 setErrorMessage(`Error: ${error.response.status} - ${error.response.data.detail}`);
-            } else if (error.request) {
-                // The request was made but no response was received
                 console.error('Search request failed, no response:', error.request);
                 setErrorMessage('No response from server.');
             } else {
-                // Something happened in setting up the request that triggered an Error
                 console.error('Error', error.message);
                 setErrorMessage('Error sending request.');
             }
@@ -296,6 +325,38 @@ const PaymentView = () => {
             }).toString();
             navigate(`/stripe?${queryParams}`);
         }
+    };
+
+    const handleReservation = async () => {
+      const csrfToken = localStorage.getItem('csrfToken');
+      const headers = {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      };
+
+      try {
+        const payload = {
+          "license_plate": licensePlateInput,
+          "city": city,
+          "address": selectedAddress.street_address,
+          "token": localStorage.getItem("access_token")
+        }
+        console.log(payload)
+        const response = await axios.post('http://127.0.0.1:8000/parking-invoice/reserve/', payload, {
+          headers: {'Content-Type': 'application/json'}
+        });
+        if (response.data !== null) {
+          setServerResponse(response.data);
+          setReservationTime(response.data.timestamp);
+          localStorage.setItem('reservationTime', response.data.timestamp);
+          localStorage.setItem('reservationSpot', response.data.spot_description);
+          localStorage.setItem('reservationAddress', selectedAddress.street_address);
+        } else {
+          console.error('Failed to confirm reservation:', response);
+        }
+      } catch (error) {
+        console.error('Error making the reservation:', error);
+      }
     };
 
     return (
@@ -343,14 +404,16 @@ const PaymentView = () => {
                 }
               />
                 <Box sx={{ p: 2, maxHeight: '50vh', overflowY: 'auto' }}>
-                    {serverResponse.map((invoice, index) => (
+                    {Array.isArray(serverResponse) ? serverResponse.map((invoice, index) => (
                         <InvoiceSelectionCard
                             key={index}
                             invoice={invoice}
                             onSelect={selectInvoice}
                             isSelected={selectedInvoice === invoice}
                         />
-                    ))}
+                    )) : (
+                      <Typography color="error"></Typography>
+                    )}
                 </Box>
                 {selectedInvoice && <ConfirmButton onClick={confirmPayment} />}
                 {errorMessage && (
@@ -419,6 +482,11 @@ const PaymentView = () => {
               )}
             </FormControl>
         ) : (
+          isRecentReservation() ? (
+            <Typography variant="h6" color="success.main">
+                Your reservation at {localStorage.getItem('reservationAddress')} for {localStorage.getItem('reservationSpot')} is confirmed and valid for the next 15 minutes!
+            </Typography>
+            ) : (
             <>
                 <Autocomplete
                     fullWidth
@@ -489,9 +557,9 @@ const PaymentView = () => {
                             margin="normal"
                         />
                     )}
-                <ConfirmButton onClick={handleFallbackSearch} />
+                <ConfirmButton onClick={handleReservation} />
             </>
-          )}
+            ))}
         </Paper>
       </Box>
       {/* New section for images with text */}
@@ -513,7 +581,7 @@ const PaymentView = () => {
                         height="140"
                         image={data.img}
                         alt={data.title}
-                        sx={{ borderRadius: '50%' }}
+                        sx={{ borderRadius: '10%' }}
                     />
                     <CardContent>
                         <Typography gutterBottom variant="h5" component="div">

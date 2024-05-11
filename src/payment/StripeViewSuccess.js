@@ -13,14 +13,14 @@ const StripeViewSuccess = () => {
 
         if (counter <= 0) {
             clearInterval(interval);
-            window.location.href = 'http://localhost:3000/stripe/';
+            window.location.href = 'http://localhost:3000/payment/';
         }
 
         return () => clearInterval(interval);
     }, [counter]);
 
     const handleImmediateRedirect = () => {
-        window.location.href = 'http://localhost:3000/stripe/';  // Redirect immediately
+        window.location.href = 'http://localhost:3000/payment/';  // Redirect immediately
     };
 
     return (

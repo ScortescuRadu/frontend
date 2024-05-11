@@ -32,6 +32,7 @@
     "amazon-kinesis-video-streams-webrtc": "^2.2.0",
     "aws-sdk": "^2.1574.0",
     "bootstrap": "^5.3.2",
+    "date-fns": "^3.6.0",
     "framer-motion": "^10.16.16",
     "google-maps-react": "^2.0.6",
     "granim": "^2.0.0",
