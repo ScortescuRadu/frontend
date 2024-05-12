@@ -59,11 +59,13 @@ export default function StripeCheckout() {
     const licensePlate = queryParams.get('license');
     const spot = queryParams.get('spot');
     const timestamp = queryParams.get('timestamp');
+    const address = queryParams.get('address');
     const [invoiceData, setInvoiceData] = useState({
         licensePlate: licensePlate || "Unknown License",
         spot: spot || "Unknown Spot",
         timestamp: timestamp || new Date().toISOString(),
-        price: 0.00
+        price: 0.00,
+        address: address || "Unknown Address"
     });
 
     useEffect(() => {
@@ -107,7 +109,8 @@ export default function StripeCheckout() {
         name: `${invoiceData.licensePlate} parking time`,
         timestamp: invoiceData.timestamp,
         licensePlate: invoiceData.licensePlate,
-        spot: invoiceData.spot
+        spot: invoiceData.spot,
+        address: invoiceData.address
     };
 
     const response = await fetch("http://127.0.0.1:8000/payment/web/checkout/", {

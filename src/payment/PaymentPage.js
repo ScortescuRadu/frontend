@@ -271,7 +271,7 @@ const PaymentView = () => {
             const response = await axios.post('http://127.0.0.1:8000/parking-invoice/license/unpaid/', {
               license_plate: searchValue
             }, { headers });
-    
+
             if (response.status === 200 && response.data.length > 0) {
                 setServerResponse(response.data);
                 setSelectedInvoice(null);
@@ -321,7 +321,8 @@ const PaymentView = () => {
             const queryParams = new URLSearchParams({
                 license: licensePlate,
                 spot: selectedInvoice.spot_description,
-                timestamp: selectedInvoice.timestamp // Assuming timestamp is a string; format it if necessary
+                timestamp: selectedInvoice.timestamp,
+                address: selectedInvoice.address
             }).toString();
             navigate(`/stripe?${queryParams}`);
         }
