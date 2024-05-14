@@ -15,6 +15,9 @@ import ParkingLotWidget from './components/ParkingLotWidget';
 
 const ParkingLotInfo= () => {
     const [userData, setUserData] = useState({});
+    const [occupancyData, setOccupancyData] = useState({});
+    const [incomeData, setIncomeData] = useState({});
+    const streetAddress = localStorage.getItem("selectedAddressOption");
     // const firstMount = useRef(true)
 
     useEffect(() => {
@@ -45,50 +48,91 @@ const ParkingLotInfo= () => {
         };
 
         fetchUserData();
-      }, []);
+      }, [streetAddress]);
 
-    const monthlyData = [
-        { name: 'Jan', earnings: 400 },
-        { name: 'Feb', earnings: 300 },
-        { name: 'March', earnings: 500 },
-        { name: 'April', earnings: 400 },
-        { name: 'March', earnings: 400 },
-        { name: 'May', earnings: 300 },
-    ];
-    const yearlyData = [
-        { name: '2021', earnings: 5000 },
-        { name: '2022', earnings: 6000 },
-    ];
-    const totalEarnings = 12000;
+      useEffect(() => {
+        const fetchOccupancyData = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/ocupancy/by-address/', {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json",
+                        'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
+                    },
+                    body: JSON.stringify({
+                        street_address: streetAddress !== "" ? streetAddress : ""
+                    }),
+                });
 
+                const data = await response.json();
+                console.log('Occupancy data:', data);
+                setOccupancyData(data);
+            } catch (error) {
+                console.error('Error fetching occupancy data:', error);
+            }
+        };
 
-    const dailyData = [
-      { time: '08:00', occupancy: 20 },
-      { time: '09:00', occupancy: 60 },
-      { time: '10:00', occupancy: 90 },
-      { time: '11:00', occupancy: 90 },
-      { time: '12:00', occupancy: 90 },
-      { time: '13:00', occupancy: 90 },
-      { time: '14:00', occupancy: 90 },
-      { time: '15:00', occupancy: 90 },
-      { time: '16:00', occupancy: 90 },
-      { time: '17:00', occupancy: 90 },
-      { time: '18:00', occupancy: 90 },
-      { time: '19:00', occupancy: 90 },
-      { time: '20:00', occupancy: 90 },
-      { time: '21:00', occupancy: 90 },
-      { time: '22:00', occupancy: 90 },
-      { time: '23:00', occupancy: 90 },
-      { time: '00:00', occupancy: 90 },
-      { time: '01:00', occupancy: 90 },
-      { time: '02:00', occupancy: 90 },
-      { time: '03:00', occupancy: 90 },
-  ];
-  const weeklyData = [
-      { time: 'Monday', occupancy: 30 },
-      { time: 'Tuesday', occupancy: 45 },
-      { time: 'Wednesday', occupancy: 75 },
-  ];
+        if (streetAddress) {
+            fetchOccupancyData();
+        }
+    }, [streetAddress]);
+    
+    useEffect(() => {
+      const fetchIncomeData = async () => {
+          try {
+              const response = await fetch('http://127.0.0.1:8000/income/by-address/', {
+                  method: 'POST',
+                  headers: {
+                      "Content-Type": "application/json",
+                      'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
+                  },
+                  body: JSON.stringify({
+                      street_address: streetAddress !== "" ? streetAddress : ""
+                  }),
+              });
+
+              const data = await response.json();
+              console.log('Income data:', data);
+              setIncomeData(data);
+          } catch (error) {
+              console.error('Error fetching income data:', error);
+          }
+      };
+
+      if (streetAddress) {
+          fetchIncomeData();
+      }
+    }, [streetAddress]);
+
+    const weeklyIncomeData = Object.keys(incomeData.daily_current || {}).map(day => ({
+      name: day,
+      currentEarnings: incomeData.daily_current[day],
+      averageEarnings: incomeData.daily_average[day] || 0,
+    }));
+
+    const monthlyIncomeData = Object.keys(incomeData.monthly_total || {}).map(month => ({
+      name: month,
+      earnings: incomeData.monthly_total[month]
+    }));
+
+    const yearlyIncomeData = Object.keys(incomeData.yearly_total || {}).map(year => ({
+        name: year,
+        earnings: incomeData.yearly_total[year]
+    }));
+
+    const totalEarnings = Object.values(incomeData.yearly_total || {}).reduce((a, b) => a + b, 0);
+
+    const dailyData = occupancyData.current_occupancy ? Object.keys(occupancyData.current_occupancy['Tuesday']).map(time => ({
+      time,
+      occupancy: occupancyData.current_occupancy['Tuesday'][time],
+      averageOccupancy: occupancyData.average_occupancy['Tuesday'][time] || 0,
+    })) : [];
+
+    const weeklyData = occupancyData.current_occupancy ? Object.keys(occupancyData.current_occupancy).map(day => ({
+        time: day,
+        occupancy: Object.values(occupancyData.current_occupancy[day]).reduce((a, b) => a + b, 0) / Object.values(occupancyData.current_occupancy[day]).length,
+        averageOccupancy: (Object.values(occupancyData.average_occupancy[day] || {}).reduce((a, b) => a + b, 0) / Object.values(occupancyData.average_occupancy[day] || {}).length) || 0,
+    })) : [];
 
     return (
        <div style={{ padding: '20px', backgroundColor: '#62728c' }}>
@@ -113,7 +157,7 @@ const ParkingLotInfo= () => {
                   initialLng={userData.longitude ? parseFloat(userData.longitude) : null}
                   isFetchLoading={!(userData.latitude && userData.longitude)}
                 />
-                <EarningsWidget monthlyData={monthlyData} yearlyData={yearlyData} totalEarnings={totalEarnings} />
+                <EarningsWidget weeklyData={weeklyIncomeData} monthlyData={monthlyIncomeData} yearlyData={yearlyIncomeData} totalEarnings={totalEarnings} />
                 <OccupancyWidget dailyData={dailyData} weeklyData={weeklyData} />
                 <QrCodeWidget />
             </Masonry>

@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { Card, CardContent, Typography, Switch, FormControlLabel, IconButton, Dialog, DialogTitle, DialogContent, Box } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import CustomTooltip from './CustomTooltip';
 
-const OccupancyWidget = ({ dailyData, weeklyData }) => {
+const OccupancyWidget = ({ dailyData, weeklyData, dailyAverageData, weeklyAverageData }) => {
     const [showWeekly, setShowWeekly] = useState(false);
     const [openModal, setOpenModal] = useState(false);
 
     const data = showWeekly ? weeklyData : dailyData;
-
-    const barColor = (percent) => {
-        if (percent < 33) return '#3498db';
-        if (percent < 66) return '#f39c12';
-        return '#e74c3c';
-    };
+    const averageData = showWeekly ? weeklyAverageData : dailyAverageData;
 
     const handleToggleModal = () => {
         setOpenModal(!openModal);
@@ -51,8 +47,10 @@ const OccupancyWidget = ({ dailyData, weeklyData }) => {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="time" />
                         <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="occupancy" fill={(entry) => barColor(entry.value)} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend />
+                        <Bar dataKey="occupancy" fill="#8884d8" name="Current Occupancy" />
+                        <Bar dataKey="averageOccupancy" fill="#82ca9d" name="Average Occupancy" />
                     </BarChart>
                 </ResponsiveContainer>
             </CardContent>
@@ -66,8 +64,10 @@ const OccupancyWidget = ({ dailyData, weeklyData }) => {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="time" />
                             <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="occupancy" fill={(entry) => barColor(entry.value)} />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend />
+                            <Bar dataKey="occupancy" fill="#8884d8" name="Current Occupancy" />
+                            <Bar dataKey="averageOccupancy" fill="#82ca9d" name="Average Occupancy" />
                         </BarChart>
                     </ResponsiveContainer>
                 </DialogContent>
