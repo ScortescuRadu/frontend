@@ -13,12 +13,10 @@ import OccupancyWidget from './components/OccupancyWidget';
 import QrCodeWidget from './components/QrCodeWidget';
 import ParkingLotWidget from './components/ParkingLotWidget';
 
-const ParkingLotInfo= () => {
+const ParkingLotInfo= ({ selectedAddress }) => {
     const [userData, setUserData] = useState({});
     const [occupancyData, setOccupancyData] = useState({});
     const [incomeData, setIncomeData] = useState({});
-    const streetAddress = localStorage.getItem("selectedAddressOption");
-    // const firstMount = useRef(true)
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -34,7 +32,7 @@ const ParkingLotInfo= () => {
                 },
               body: JSON.stringify({
                   token: access_token,
-                  street_address: streetAddress !== "" ? streetAddress : ""
+                  street_address: selectedAddress !== "" ? selectedAddress : ""
               }),
             });
 
@@ -48,7 +46,7 @@ const ParkingLotInfo= () => {
         };
 
         fetchUserData();
-      }, [streetAddress]);
+      }, [selectedAddress]);
 
       useEffect(() => {
         const fetchOccupancyData = async () => {
@@ -60,7 +58,7 @@ const ParkingLotInfo= () => {
                         'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
                     },
                     body: JSON.stringify({
-                        street_address: streetAddress !== "" ? streetAddress : ""
+                        street_address: selectedAddress !== "" ? selectedAddress : ""
                     }),
                 });
 
@@ -72,10 +70,10 @@ const ParkingLotInfo= () => {
             }
         };
 
-        if (streetAddress) {
+        if (selectedAddress) {
             fetchOccupancyData();
         }
-    }, [streetAddress]);
+    }, [selectedAddress]);
     
     useEffect(() => {
       const fetchIncomeData = async () => {
@@ -87,7 +85,7 @@ const ParkingLotInfo= () => {
                       'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
                   },
                   body: JSON.stringify({
-                      street_address: streetAddress !== "" ? streetAddress : ""
+                      street_address: selectedAddress !== "" ? selectedAddress : ""
                   }),
               });
 
@@ -99,10 +97,10 @@ const ParkingLotInfo= () => {
           }
       };
 
-      if (streetAddress) {
+      if (selectedAddress) {
           fetchIncomeData();
       }
-    }, [streetAddress]);
+    }, [selectedAddress]);
 
     const weeklyIncomeData = Object.keys(incomeData.daily_current || {}).map(day => ({
       name: day,

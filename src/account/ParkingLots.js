@@ -5,8 +5,7 @@ import Box from '@mui/material/Box';
 import AddIcon from '@mui/icons-material/Add';
 import { Link } from 'react-router-dom';
 
-const ParkingLots = ({color='#62728c'}) => {
-  const [selectedOption, setSelectedOption] = useState([]);
+const ParkingLots = ({color='#62728c', selectedAddress, setSelectedAddress}) => {
   const [fetchedOptions, setFetchedOptions] = useState([]);
 
   useEffect(() => {
@@ -24,29 +23,21 @@ const ParkingLots = ({color='#62728c'}) => {
         const data = await response.json();
         console.log('lots info:')
         console.log(data)
-
-        // Extract street addresses from the fetched data
         const streetAddresses = data.map((item) => item.street_address);
 
-        // Set the fetched options in state
         setFetchedOptions(streetAddresses);
-        // Set the default selected option to the first one, if available
-        setSelectedOption(streetAddresses[0] || '');
-
-        // Store street addresses in local storage
+        setSelectedAddress(streetAddresses[0] || '');
         localStorage.setItem('streetAddresses', JSON.stringify(streetAddresses));
-
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [setSelectedAddress]);
 
   const handleSelectChange = (event, value) => {
-    // Update selected option and save to local storage
-    setSelectedOption(value);
+    setSelectedAddress(value);
     localStorage.setItem('selectedAddressOption', value);
   };
 
@@ -70,7 +61,7 @@ const ParkingLots = ({color='#62728c'}) => {
       >
         <Autocomplete
           options={fetchedOptions}
-          value={selectedOption}
+          value={selectedAddress}
           onChange={handleSelectChange}
           renderInput={(params) => (
             <TextField
