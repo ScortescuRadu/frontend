@@ -3,6 +3,7 @@ import { Card, Typography, Select, MenuItem, Box } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import IconButton from '@mui/material/IconButton';
 import ParkingLot3D from './ParkingLot3D';
+import { Suspense } from 'react';
 
 const ParkingLotWidget = () => {
   const [selectedLevel, setSelectedLevel] = useState(1);
@@ -56,7 +57,9 @@ const ParkingLotWidget = () => {
         ))}
       </Box>
       {/* Placeholder for parking map */}
-      <ParkingLot3D />
+      <Suspense fallback={<div>Loading...</div>}>
+        <ParkingLot3D />
+      </Suspense>
     </Card>
   );
 };

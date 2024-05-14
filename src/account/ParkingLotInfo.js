@@ -15,7 +15,7 @@ import ParkingLotWidget from './components/ParkingLotWidget';
 
 const ParkingLotInfo= () => {
     const [userData, setUserData] = useState({});
-    const firstMount = useRef(true)
+    // const firstMount = useRef(true)
 
     useEffect(() => {
         const fetchUserData = async () => {

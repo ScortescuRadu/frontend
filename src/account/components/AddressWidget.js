@@ -10,11 +10,12 @@ const containerStyle = {
     height: '200px'
 };
 
-const AddressWidget = ({initialLat, initialLng, isFetchLoading}) => {
+const AddressWidget = ({ initialLat, initialLng, isFetchLoading, initialAddress }) => {
     const [map, setMap] = useState(null);
     const [editMode, setEditMode] = useState(false);
-    const [address, setAddress] = useState('');
-    const [selectedPlace, setSelectedPlace] = useState({lat: initialLat, lng: initialLng});
+    const [address, setAddress] = useState(initialAddress || '');
+    const [selectedPlace, setSelectedPlace] = useState({ lat: initialLat, lng: initialLng });
+    const [loading, setLoading] = useState(isFetchLoading);
 
     const { isLoaded } = useJsApiLoader({
         googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
@@ -33,12 +34,15 @@ const AddressWidget = ({initialLat, initialLng, isFetchLoading}) => {
                 return;
             }
             const location = place.geometry.location;
-            map.panTo(location);
             setAddress(place.formatted_address);
-            setSelectedPlace({
+            const newSelectedPlace = {
                 lat: location.lat(),
                 lng: location.lng()
-            });
+            };
+            setSelectedPlace(newSelectedPlace);
+            if (map) {
+                map.panTo(newSelectedPlace);
+            }
         });
         return () => window.google.maps.event.removeListener(autocompleteListener);
     }, [map]);
@@ -69,7 +73,7 @@ const AddressWidget = ({initialLat, initialLng, isFetchLoading}) => {
                 if (!response.ok) {
                     throw new Error('Failed to update address');
                 }
-                console.log('Adress updated successfully');
+                console.log('Address updated successfully');
             })
             .catch(error => {
                 console.error('Error updating address:', error);
@@ -78,17 +82,45 @@ const AddressWidget = ({initialLat, initialLng, isFetchLoading}) => {
 
     const handleCancel = () => {
         setEditMode(false);
+        setAddress(initialAddress);
+        const initialPlace = { lat: initialLat, lng: initialLng };
+        setSelectedPlace(initialPlace);
+        if (map) {
+            map.panTo(initialPlace);
+        }
     };
 
     useEffect(() => {
-        console.log("Initial Lat, Lng:", initialLat, initialLng);
-        console.log("isLoaded:", isLoaded);
-        console.log("isFetchLoading:", isFetchLoading);
         if (initialLat !== null && !isFetchLoading) {
             const center = { lat: initialLat, lng: initialLng };
-            setSelectedPlace(center)
+            setSelectedPlace(center);
+            setLoading(false);
+        } else if (initialAddress) {
+            // Geocode the address
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ address: initialAddress }, (results, status) => {
+                if (status === 'OK' && results[0].geometry) {
+                    const location = results[0].geometry.location;
+                    const initialPlace = { lat: location.lat(), lng: location.lng() };
+                    setSelectedPlace(initialPlace);
+                    if (map) {
+                        map.panTo(initialPlace);
+                    }
+                    setLoading(false);
+                } else {
+                    console.error('Geocode was not successful for the following reason: ' + status);
+                    setLoading(false);
+                }
+            });
         }
-    }, [initialLat, initialLng, isFetchLoading, isLoaded]);
+    }, [initialLat, initialLng, initialAddress, isFetchLoading]);
+
+    useEffect(() => {
+        console.log("Map isLoaded:", isLoaded);
+        console.log("Loading state:", loading);
+        console.log("Initial Address:", initialAddress);
+        console.log("Selected Place:", selectedPlace);
+    }, [isLoaded, loading, initialAddress, selectedPlace]);
 
     return (
         <Card sx={{
@@ -110,10 +142,6 @@ const AddressWidget = ({initialLat, initialLng, isFetchLoading}) => {
             }
         }}>
             <CardContent sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                {isFetchLoading? (
-                    <CircularProgress />
-                ) : (
-                <>
                 <Typography sx={{ flexGrow: 1, textAlign: 'left', fontSize: 16, fontWeight: 'medium', color: '#333' }} gutterBottom>
                     Address
                 </Typography>
@@ -133,44 +161,55 @@ const AddressWidget = ({initialLat, initialLng, isFetchLoading}) => {
                         </IconButton>
                     )}
                 </Box>
-                </>)}
             </CardContent>
-            {editMode && isLoaded && !isFetchLoading && (
-                <div style={{ visibility: editMode ? 'visible' : 'hidden' }}>
-                    <Autocomplete onLoad={handleLoad}>
-                        <TextField
-                            fullWidth
-                            onChange={e => setAddress(e.target.value)}
-                            value={address}
-                            placeholder="Search new location"
-                            variant="outlined"
-                            size="small"
-                            sx={{ mb: 2 }}
-                        />
-                    </Autocomplete>
-                </div>
-            )}
-            {isFetchLoading? (
+            {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%' }}>
                     <CircularProgress />
+                </Box>
             ) : (
-            <>
-            {isLoaded &&(
-                <GoogleMap
-                    mapContainerStyle={containerStyle}
-                    center={selectedPlace}
-                    zoom={15}
-                    onLoad={map => setMap(map)}
-                    options={{
-                        zoomControl: true,
-                        streetViewControl: false,
-                        mapTypeControl: false,
-                        fullscreenControl: false
-                    }}
-                >
-                    <Marker position={selectedPlace} />
-                </GoogleMap>
+                <>
+                    {editMode && isLoaded && (
+                        <div style={{ visibility: editMode ? 'visible' : 'hidden' }}>
+                            <Autocomplete onLoad={handleLoad}>
+                                <TextField
+                                    fullWidth
+                                    onChange={e => setAddress(e.target.value)}
+                                    value={address}
+                                    placeholder="Search new location"
+                                    variant="outlined"
+                                    size="small"
+                                    sx={{ mb: 2 }}
+                                />
+                            </Autocomplete>
+                        </div>
+                    )}
+                    {isLoaded && (
+                        <GoogleMap
+                            mapContainerStyle={containerStyle}
+                            center={selectedPlace}
+                            zoom={15}
+                            onLoad={mapInstance => {
+                                setMap(mapInstance);
+                                mapInstance.panTo(selectedPlace);
+                            }}
+                            options={{
+                                zoomControl: true,
+                                streetViewControl: false,
+                                mapTypeControl: false,
+                                fullscreenControl: false
+                            }}
+                        >
+                            <Marker
+                                position={selectedPlace}
+                                visible={true}
+                                icon={{
+                                    url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                                }}
+                            />
+                        </GoogleMap>
+                    )}
+                </>
             )}
-            </>)}
         </Card>
     );
 };

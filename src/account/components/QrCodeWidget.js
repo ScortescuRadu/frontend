@@ -47,7 +47,13 @@ const QrCodeWidget = () => {
                 </IconButton>
             </CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
-                <QRCodeCanvas ref={qrRef} value="https://example.com?param=value" size={230} level={"H"} includeMargin={true} />
+            <QRCodeCanvas
+                value="https://example.com?param=value"
+                size={230}
+                level={"H"}
+                includeMargin={true}
+                // ref={(node) => { qrRef.current = node ? node.canvas : null; }}
+            />
             </Box>
         </Card>
     );

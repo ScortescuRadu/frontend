@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useTransition } from 'react';
 import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
 import { OrbitControls, Plane, PerspectiveCamera } from '@react-three/drei';
 import { IconButton, Button, Box, SpeedDial, SpeedDialIcon, SpeedDialAction, TextField, Typography } from '@mui/material';
@@ -73,6 +73,8 @@ const ParkingLot3D = () => {
   const [number, setNumber] = useState(0);
   const [rotation, setRotation] = useState(0);
   const [isChanged, setIsChanged] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
 
   const loadedTextures = useLoader(TextureLoader, Object.values(textures));
   const textureMap = {
@@ -83,33 +85,37 @@ const ParkingLot3D = () => {
 
   const editTile = (position, typeKey) => {
     console.log(`Editing tile at ${position} with type ${typeKey}`);
-    setIsChanged(true);
-    if (!editing || typeKey === 'erase') {
-      console.log('Erasing or not editing');
-      setTiles(prev => {
-        const updatedTiles = { ...prev };
-        delete updatedTiles[position];
-        return updatedTiles;
-      });
-    } else {
-      const newNumber = typeKey === 'parking' ? (sectorNumbers[sector] || 0) + 1 : undefined;
-      const tileData = {
-        type: typeKey,
-        texture: textureMap[typeKey],
-        sector,
-        number: newNumber,
-        rotation: typeKey === 'parking' ? rotation : 0  // Apply rotation only for parking tiles
-      };
+    startTransition(() => {
+      setIsLoading(true);
+      setIsChanged(true);
+      if (!editing || typeKey === 'erase') {
+        console.log('Erasing or not editing');
+        setTiles(prev => {
+          const updatedTiles = { ...prev };
+          delete updatedTiles[position];
+          return updatedTiles;
+        });
+      } else {
+        const newNumber = typeKey === 'parking' ? (sectorNumbers[sector] || 0) + 1 : undefined;
+        const tileData = {
+          type: typeKey,
+          texture: textureMap[typeKey],
+          sector,
+          number: newNumber,
+          rotation: typeKey === 'parking' ? rotation : 0  // Apply rotation only for parking tiles
+        };
 
-      setTiles(prev => ({
-        ...prev,
-        [position]: tileData
-      }));
-      if (typeKey === 'parking') {
-        setSectorNumbers(prev => ({ ...prev, [sector]: newNumber }));
-        setNumber(newNumber + 1);
+        setTiles(prev => ({
+          ...prev,
+          [position]: tileData
+        }));
+        if (typeKey === 'parking') {
+          setSectorNumbers(prev => ({ ...prev, [sector]: newNumber }));
+          setNumber(newNumber + 1);
+        }
       }
-    }
+      setIsLoading(false);
+    });
   };
 
   const toggleEditing = () => {
@@ -163,19 +169,31 @@ const ParkingLot3D = () => {
   };
 
   const handleRotate = () => {
-    setRotation((prevRotation) => prevRotation - 90);
+    setIsLoading(true);
+    startTransition(() => {
+      setRotation((prevRotation) => prevRotation - 90);
+      setIsLoading(false);
+    })
   };
 
   const confirmEdits = () => {
-    console.log("Edits confirmed.");
-    setLastConfirmedTiles(tiles);
-    setIsChanged(false);
+    setIsLoading(true);
+    startTransition(() => {
+      console.log("Edits confirmed.");
+      setLastConfirmedTiles(tiles);
+      setIsChanged(false);
+      setIsLoading(false);
+    })
   };
 
   const cancelEdits = () => {
-    setTiles(lastConfirmedTiles);
-    console.log("Edits cancelled.");
-    setIsChanged(false);
+    setIsLoading(true);
+    startTransition(() => {
+      setTiles(lastConfirmedTiles);
+      console.log("Edits cancelled.");
+      setIsChanged(false);
+      setIsLoading(false);
+    })
   };
 
   const ParkingDetails = () => (
