@@ -13,12 +13,12 @@ import OccupancyWidget from './components/OccupancyWidget';
 import QrCodeWidget from './components/QrCodeWidget';
 import ParkingLotWidget from './components/ParkingLotWidget';
 
-const ParkingLotInfo= ({ selectedAddress }) => {
+const ParkingLotInfo = ({ selectedAddress }) => {
     const [userData, setUserData] = useState({});
     const [occupancyData, setOccupancyData] = useState({});
     const [incomeData, setIncomeData] = useState({});
 
-    useEffect(() => {
+    const fetchUserData = async () => {
         const fetchUserData = async () => {
           try {
               const access_token = localStorage.getItem("access_token")
@@ -46,9 +46,9 @@ const ParkingLotInfo= ({ selectedAddress }) => {
         };
 
         fetchUserData();
-      }, [selectedAddress]);
+      };
 
-      useEffect(() => {
+      const fetchOccupancyData = async () => {
         const fetchOccupancyData = async () => {
             try {
                 const response = await fetch('http://127.0.0.1:8000/ocupancy/by-address/', {
@@ -73,9 +73,9 @@ const ParkingLotInfo= ({ selectedAddress }) => {
         if (selectedAddress) {
             fetchOccupancyData();
         }
-    }, [selectedAddress]);
+    };
     
-    useEffect(() => {
+    const fetchIncomeData = async () => {
       const fetchIncomeData = async () => {
           try {
               const response = await fetch('http://127.0.0.1:8000/income/by-address/', {
@@ -100,6 +100,39 @@ const ParkingLotInfo= ({ selectedAddress }) => {
       if (selectedAddress) {
           fetchIncomeData();
       }
+    };
+
+    useEffect(() => {
+      fetchUserData();
+      fetchOccupancyData();
+      fetchIncomeData();
+    }, [selectedAddress]);
+
+    useEffect(() => {
+      const socket = new WebSocket('ws://localhost:8000/ws/parking_lot_updates/');
+
+      socket.onopen = () => {
+          console.log('WebSocket connection established');
+      };
+
+      socket.onmessage = (event) => {
+          console.log('WebSocket message received:', event.data);
+          const update = JSON.parse(event.data);
+
+          if (update.street_address === selectedAddress) {
+              fetchUserData();
+              fetchOccupancyData();
+              fetchIncomeData();
+          }
+      };
+
+      socket.onclose = () => {
+          console.log('WebSocket connection closed');
+      };
+
+      return () => {
+          socket.close();
+      };
     }, [selectedAddress]);
 
     const weeklyIncomeData = Object.keys(incomeData.daily_current || {}).map(day => ({
