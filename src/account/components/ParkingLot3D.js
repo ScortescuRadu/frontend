@@ -102,23 +102,37 @@ const ParkingLot3D = ({ selectedAddress }) => {
   }, [selectedAddress]);
 
   const saveTiles = async () => {
-    const access_token = localStorage.getItem('access_token');
+    const access_token = localStorage.getItem("access_token");
     const url = 'http://localhost:8000/tile/map/';
+  
+    // Filter out only necessary properties
+    const filteredTiles = Object.fromEntries(
+      Object.entries(tiles).map(([key, value]) => [
+        key,
+        {
+          type: value.type,
+          sector: value.sector,
+          number: value.number,
+          rotation: value.rotation
+        }
+      ])
+    );
+  
     const payload = {
       street_address: selectedAddress,
-      tiles_data: tiles,
+      tiles_data: filteredTiles
     };
-
+  
     try {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${access_token}`,
+          'Authorization': `Bearer ${access_token}`,
         },
         body: JSON.stringify(payload),
       });
-
+  
       if (response.ok) {
         console.log('Tiles saved successfully');
       } else {
@@ -402,7 +416,7 @@ const ParkingLot3D = ({ selectedAddress }) => {
           })}
         </Canvas>
         {editing && currentType === 'parking' && <ParkingDetails />}
-        <Box position="absolute" right={50} bottom={20} style={{ zIndex: 10 }}>
+        <Box position="absolute" right={50} bottom={-40} style={{ zIndex: 1 }}>
           <SpeedDial
             ariaLabel="Edit Options"
             icon={<SpeedDialIcon />}
