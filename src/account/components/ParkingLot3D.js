@@ -1,8 +1,7 @@
 import React, { useRef, useState, useEffect, useTransition } from 'react';
 import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
 import { OrbitControls, Plane, PerspectiveCamera } from '@react-three/drei';
-import { IconButton, Button, Box, SpeedDial, SpeedDialIcon, SpeedDialAction, TextField, Typography, Tooltip } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
+import { IconButton, Button, Box, SpeedDial, SpeedDialIcon, SpeedDialAction, TextField, Typography, CircularProgress } from '@mui/material';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -88,7 +87,7 @@ const ParkingLot3D = ({ selectedAddress }) => {
   const [rotation, setRotation] = useState(0);
   const [isChanged, setIsChanged] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading state
 
   const loadedTextures = useLoader(TextureLoader, Object.values(textures));
   const textureMap = {
@@ -98,14 +97,19 @@ const ParkingLot3D = ({ selectedAddress }) => {
   };
 
   useEffect(() => {
+    if (loadedTextures) {
+      setIsLoading(false); // Set loading to false when textures are loaded
+    }
+  }, [loadedTextures]);
+
+  useEffect(() => {
     loadTiles();
   }, [selectedAddress]);
 
   const saveTiles = async () => {
-    const access_token = localStorage.getItem("access_token");
+    const access_token = localStorage.getItem('access_token');
     const url = 'http://localhost:8000/tile/map/';
-  
-    // Filter out only necessary properties
+
     const filteredTiles = Object.fromEntries(
       Object.entries(tiles).map(([key, value]) => [
         key,
@@ -113,26 +117,26 @@ const ParkingLot3D = ({ selectedAddress }) => {
           type: value.type,
           sector: value.sector,
           number: value.number,
-          rotation: value.rotation
-        }
+          rotation: value.rotation,
+        },
       ])
     );
-  
+
     const payload = {
       street_address: selectedAddress,
-      tiles_data: filteredTiles
+      tiles_data: filteredTiles,
     };
-  
+
     try {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          Authorization: `Bearer ${access_token}`,
         },
         body: JSON.stringify(payload),
       });
-  
+
       if (response.ok) {
         console.log('Tiles saved successfully');
       } else {
@@ -392,29 +396,41 @@ const ParkingLot3D = ({ selectedAddress }) => {
         </Box>
       )}
       <Box position="relative" width="100%" height="500px" style={{ top: '90px' }}>
-        <Canvas>
-          <OrbitControls ref={controlRef} enableRotate={false} enableZoom={false} enablePan={false} target={[0, 0, 0]} />
-          <ambientLight intensity={2.5} />
-          <pointLight position={[10, 10, 10]} />
-          <PerspectiveCamera makeDefault position={[0, 25, 0]} fov={45} />
-          <gridHelper args={[20, 20]} />
-          <HoverEffect editTile={editTile} currentType={currentType} editing={editing} setHoveredTileInfo={setHoveredTileInfo} />
-          {Object.entries(tiles).map(([key, { texture, rotation, sector, number }]) => {
-            const [x, z] = key.split(',').map(Number);
-            return (
-              <Plane
-                key={key}
-                position={[x, 0.01, z]}
-                args={[1, 1]}
-                rotation={[-Math.PI / 2, 0, THREE.MathUtils.degToRad(rotation)]}
-                visible={true}
-                userData={{ isTile: true, tileInfo: { sector, number } }}
-              >
-                <meshStandardMaterial attach="material" map={texture} />
-              </Plane>
-            );
-          })}
-        </Canvas>
+        {isLoading ? ( // Show loading spinner while textures are loading
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            width="100%"
+            height="100%"
+          >
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Canvas>
+            <OrbitControls ref={controlRef} enableRotate={false} enableZoom={false} enablePan={false} target={[0, 0, 0]} />
+            <ambientLight intensity={2.5} />
+            <pointLight position={[10, 10, 10]} />
+            <PerspectiveCamera makeDefault position={[0, 25, 0]} fov={45} />
+            <gridHelper args={[20, 20]} />
+            <HoverEffect editTile={editTile} currentType={currentType} editing={editing} setHoveredTileInfo={setHoveredTileInfo} />
+            {Object.entries(tiles).map(([key, { texture, rotation, sector, number }]) => {
+              const [x, z] = key.split(',').map(Number);
+              return (
+                <Plane
+                  key={key}
+                  position={[x, 0.01, z]}
+                  args={[1, 1]}
+                  rotation={[-Math.PI / 2, 0, THREE.MathUtils.degToRad(rotation)]}
+                  visible={true}
+                  userData={{ isTile: true, tileInfo: { sector, number } }}
+                >
+                  <meshStandardMaterial attach="material" map={texture} />
+                </Plane>
+              );
+            })}
+          </Canvas>
+        )}
         {editing && currentType === 'parking' && <ParkingDetails />}
         <Box position="absolute" right={50} bottom={-40} style={{ zIndex: 1 }}>
           <SpeedDial
@@ -432,7 +448,7 @@ const ParkingLot3D = ({ selectedAddress }) => {
                 onClick={(event) => {
                   event.stopPropagation();
                   setCurrentType(tileType.name);
-                  setEditing(true); // Ensure editing is enabled when selecting a texture
+                  setEditing(true);
                 }}
               />
             ))}
