@@ -217,7 +217,7 @@ const ParkingLotInfo = ({ selectedAddress }) => {
                   Parking Lot Management
               </Typography>
             </div>
-            <ParkingLotWidget />
+            <ParkingLotWidget selectedAddress={selectedAddress}/>
         </div>
     );
 }

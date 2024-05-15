@@ -5,7 +5,7 @@ import IconButton from '@mui/material/IconButton';
 import ParkingLot3D from './ParkingLot3D';
 import { Suspense } from 'react';
 
-const ParkingLotWidget = () => {
+const ParkingLotWidget = ({ selectedAddress }) => {
   const [selectedLevel, setSelectedLevel] = useState(1);
 
   const parkingLevels = {
@@ -58,7 +58,7 @@ const ParkingLotWidget = () => {
       </Box>
       {/* Placeholder for parking map */}
       <Suspense fallback={<div>Loading...</div>}>
-        <ParkingLot3D />
+        <ParkingLot3D selectedAddress={selectedAddress}/>
       </Suspense>
     </Card>
   );
