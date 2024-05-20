@@ -150,7 +150,7 @@ const ParkViewEnhanced = () => {
       client.current.onopen = () => {
           console.log('WebSocket Client Connected for task:', task_id);
       };
-  
+
       client.current.onmessage = (message) => {
           const data = JSON.parse(message.data);
           console.log('Received data from server:', data);
