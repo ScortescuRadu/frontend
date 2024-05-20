@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { KinesisVideoClient,
   GetDataEndpointCommand,
   GetSignalingChannelEndpointCommand,
@@ -16,6 +16,7 @@ const EntranceStream = () => {
   const videoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const pendingIceCandidatesRef = useRef([]);
+  const [isMasterReady, setIsMasterReady] = useState(false);
 
   useEffect(() => {
     const channelName = 'license-channel';
@@ -117,6 +118,7 @@ const EntranceStream = () => {
                 channelEndpoint: signalingEndpoint.ResourceEndpoint,
                 role: KVSWebRTC.Role.MASTER,
                 region,
+                clientId: null, // No clientId for MASTER role
                 credentials: {
                   accessKeyId,
                   secretAccessKey,
@@ -126,6 +128,7 @@ const EntranceStream = () => {
               signalingClient.on('open', async () => {
                 console.log('Connected to signaling channel');
                 signalingClient.sendSdpOffer(offer);
+                setIsMasterReady(true); // Set master ready
               });
 
               signalingClient.on('sdpAnswer', async answer => {
@@ -167,7 +170,7 @@ const EntranceStream = () => {
     <div>
       <h1>Entrance Stream</h1>
       <video ref={videoRef} autoPlay playsInline />
-      <ViewerStream />
+      {isMasterReady && <ViewerStream />}
     </div>
   );
 };
