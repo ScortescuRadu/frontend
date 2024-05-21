@@ -6,6 +6,16 @@ const DrawingCanvas = ({ currentFrameImage, onSave, onCancel }) => {
     const [polygons, setPolygons] = useState([]);
     const [isErasing, setIsErasing] = useState(false);
 
+    function sortPointsToRectangle(points) {
+        points.sort((a, b) => a.y - b.y);
+        let topTwo = points.slice(0, 2);
+        let bottomTwo = points.slice(2, 4);
+        topTwo.sort((a, b) => a.x - b.x);
+        bottomTwo.sort((a, b) => a.x - b.x);
+        console.log([topTwo[0], topTwo[1], bottomTwo[1], bottomTwo[0]])
+        return [topTwo[0], topTwo[1], bottomTwo[1], bottomTwo[0]];
+    }
+
     useEffect(() => {
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
@@ -35,14 +45,7 @@ const DrawingCanvas = ({ currentFrameImage, onSave, onCancel }) => {
             }
         }
 
-        function sortPointsToRectangle(points) {
-            points.sort((a, b) => a.y - b.y);
-            let topTwo = points.slice(0, 2);
-            let bottomTwo = points.slice(2, 4);
-            topTwo.sort((a, b) => a.x - b.x);
-            bottomTwo.sort((a, b) => a.x - b.x);
-            return [topTwo[0], topTwo[1], bottomTwo[1], bottomTwo[0]];
-        }
+        sortPointsToRectangle(points)
 
         function drawPoint(context, point) {
             context.fillStyle = 'blue';
@@ -99,15 +102,22 @@ const DrawingCanvas = ({ currentFrameImage, onSave, onCancel }) => {
         };
     }, [points, polygons]);
 
-    // const handleSaveAll = () => {
-    //     onSave(polygons.map(polygon => sortPointsToRectangle(polygon)));
-    //     setPolygons([]);
-    //     setPoints([]);
-    // };
-
-    const handleCancelAll = () => {
-        onCancel();
+    const handleSave = () => {
+        const canvas = canvasRef.current;
+        const transformedPolygons = polygons.map(polygon => 
+            sortPointsToRectangle(polygon).map(point => ({
+                x: point.x / canvas.width,
+                y: point.y / canvas.height
+            }))
+        );
+        console.log('Saving polygons:', transformedPolygons);
+        onSave(transformedPolygons);
         setPolygons([]);
+        setPoints([]);
+    };
+
+    const handleCancel = () => {
+        onCancel();
         setPoints([]);
     };
 
@@ -119,11 +129,32 @@ const DrawingCanvas = ({ currentFrameImage, onSave, onCancel }) => {
         <div style={{ position: 'relative' }}>
             <canvas ref={canvasRef} style={{ position: 'absolute', top: 0, left: 0, zIndex: 5, cursor: isErasing ? 'copy' : 'crosshair' }}/>
             <img src={currentFrameImage} alt="Frame" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            {points.length === 4 && (
-                <div style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 10 }}>
-                    <button onClick={() => onSave(points)}>Save</button>
-                    <button onClick={() => { setPoints([]); onCancel(); }}>Cancel</button>
-                    <button onClick={toggleEraser}>{isErasing ? 'Stop Erasing' : 'Erase'}</button>
+            {polygons.length > 0 && (
+                <div style={{ position: 'absolute', bottom: -50, right: 0, zIndex: 10, display: 'flex', gap: '10px' }}>
+                    <button
+                        style={{
+                            padding: '5px 10px',
+                            background: 'black',
+                            color: 'white',
+                            cursor: 'pointer',
+                        }}
+                        onClick={handleSave}>Save</button>
+                    <button
+                        style={{
+                            padding: '5px 10px',
+                            background: 'black',
+                            color: 'white',
+                            cursor: 'pointer',
+                        }}
+                        onClick={handleCancel}>Cancel</button>
+                    <button
+                        style={{
+                            padding: '5px 10px',
+                            background: 'black',
+                            color: 'white',
+                            cursor: 'pointer',
+                        }}
+                        onClick={toggleEraser}>{isErasing ? 'Stop Erasing' : 'Erase'}</button>
                 </div>
             )}
         </div>

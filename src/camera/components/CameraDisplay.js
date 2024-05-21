@@ -87,6 +87,21 @@ const CameraDisplay = ({
 
     const toggleDrawing = () => setIsDrawingActive(!isDrawingActive);
 
+    const handleSaveDrawing = (newPolygons) => {
+        console.log('saving boxes')
+        const newBoxes = newPolygons.map(polygon => ({
+            box: polygon,
+            level: 1,
+            letter: 'A',
+            number: 1,
+            selected: false
+        }));
+        console.log('New boxes:', newBoxes);
+        setBoxesDetails([...boxesDetails, ...newBoxes]);
+        console.log('Updated boxesDetails after saving:', [...boxesDetails, ...newBoxes]);
+        setIsDrawingActive(false);
+    };
+
     useEffect(() => {
         setBoxesDetails(
             boundingBoxes.map((box, index) => ({
@@ -114,7 +129,15 @@ const CameraDisplay = ({
           window.removeEventListener('resize', calculateScale);
         };
     }, [boundingBoxes, originalImageWidth, originalImageHeight]);
-    
+
+    useEffect(() => {
+        console.log('Boxes details with coordinates:', boxesDetails.map(detail => ({
+            left: detail.box[0].x * mediaScale.scaleX,
+            top: detail.box[0].y * mediaScale.scaleY,
+            width: (detail.box[2].x - detail.box[0].x) * mediaScale.scaleX,
+            height: (detail.box[2].y - detail.box[0].y) * mediaScale.scaleY,
+        })));
+    }, [boxesDetails, mediaScale]);
 
     return (
         <div>
@@ -191,7 +214,7 @@ const CameraDisplay = ({
                                 {isDrawingActive ? (
                                     <DrawingCanvas
                                         currentFrameImage={currentFrameImage}
-                                        onSave={(data) => console.log('Saved data:', data)}
+                                        onSave={handleSaveDrawing}
                                         onCancel={() => setIsDrawingActive(false)}
                                     />
                                 ): (<img
@@ -256,17 +279,17 @@ const CameraDisplay = ({
                                         style={{
                                             position: 'absolute',
                                             border: detail.selected ? '3px solid blue' : '2px solid red',
-                                            left: `${detail.box[0] * mediaScale.scaleX}px`,
-                                            top: `${detail.box[1] * mediaScale.scaleY}px`,
-                                            width: `${(detail.box[2] - detail.box[0]) * mediaScale.scaleX}px`,
-                                            height: `${(detail.box[3] - detail.box[1]) * mediaScale.scaleY}px`,
+                                            left: `${detail.box[0].x * originalImageWidth * mediaScale.scaleX}px`,
+                                            top: `${detail.box[0].y * originalImageHeight * mediaScale.scaleY}px`,
+                                            width: `${(detail.box[2].x - detail.box[0].x) * originalImageWidth * mediaScale.scaleX}px`,
+                                            height: `${(detail.box[2].y - detail.box[0].y) * originalImageHeight * mediaScale.scaleY}px`,
                                             cursor: isDrawingActive ? 'default' : 'pointer',
                                             pointerEvents: isDrawingActive ? 'none' : 'auto'
                                         }}
                                         onClick={() => handleBoxClick(index)}
                                     >
                                         <span style={{
-                                            fontSize: `${Math.min((detail.box[2] - detail.box[0]) * mediaScale.scaleX, (detail.box[3] - detail.box[1]) * mediaScale.scaleY) / 3}px`,
+                                            fontSize: `${Math.min((detail.box[2].x - detail.box[0].x) * originalImageWidth * mediaScale.scaleX, (detail.box[2].y - detail.box[0].y) * originalImageHeight * mediaScale.scaleY) / 3}px`,
                                             userSelect: 'none',
                                             display: 'flex',
                                             alignItems: 'center',
