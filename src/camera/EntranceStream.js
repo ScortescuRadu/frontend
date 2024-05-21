@@ -18,12 +18,14 @@ const EntranceStream = () => {
   const pendingIceCandidatesRef = useRef([]);
   const [isMasterReady, setIsMasterReady] = useState(false);
   const signalingClientRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
 
   useEffect(() => {
     const channelName = 'license-channel';
     const region = 'us-east-1';
     const accessKeyId = 'AKIATCKAOKOGMEQ2ZOGX';
     const secretAccessKey = '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';
+    const kinesisVideoStreamName = 'license-stream';
 
     const config = {
       region,
@@ -40,34 +42,25 @@ const EntranceStream = () => {
 
         // Describe the signaling channel to get the ARN
         console.log('Describing signaling channel...');
-        const describeSignalingChannelCommand = new DescribeSignalingChannelCommand({
-          ChannelName: channelName
-        });
+        const describeSignalingChannelCommand = new DescribeSignalingChannelCommand({ ChannelName: channelName });
         const describeResponse = await kinesisVideoClient.send(describeSignalingChannelCommand);
         const channelARN = describeResponse.ChannelInfo.ChannelARN;
         console.log('Channel ARN:', channelARN);
 
         // Get Signaling Channel Endpoint
+        console.log('Sending GetSignalingChannelEndpointCommand...');
         const getSignalingChannelEndpointCommand = new GetSignalingChannelEndpointCommand({
           ChannelARN: channelARN,
-          SingleMasterChannelEndpointConfiguration: {
-            Protocols: ['WSS'],
-            Role: 'MASTER',
-          },
+          SingleMasterChannelEndpointConfiguration: { Protocols: ['WSS'], Role: 'MASTER' },
         });
-
-        console.log('Sending GetSignalingChannelEndpointCommand...');
         const signalingEndpointResponse = await kinesisVideoClient.send(getSignalingChannelEndpointCommand);
         const signalingEndpoint = signalingEndpointResponse.ResourceEndpointList.find(endpoint => endpoint.Protocol === 'WSS');
         console.log('Signaling endpoint received:', signalingEndpoint.ResourceEndpoint);
 
         // Get ICE server configuration
         const kinesisVideoSignalingClient = new KinesisVideoSignalingClient(config);
-        const getIceServerConfigCommand = new GetIceServerConfigCommand({
-          ChannelARN: channelARN,
-        });
-
         console.log('Sending GetIceServerConfigCommand...');
+        const getIceServerConfigCommand = new GetIceServerConfigCommand({ ChannelARN: channelARN });
         const iceServerConfigResponse = await kinesisVideoSignalingClient.send(getIceServerConfigCommand);
 
         let iceServers = [];
@@ -82,12 +75,12 @@ const EntranceStream = () => {
           console.warn('No ICE server configuration found, proceeding without TURN servers.');
         }
 
+        // Request webcam access
         if (navigator.mediaDevices.getUserMedia) {
           console.log('Requesting access to webcam...');
           navigator.mediaDevices.getUserMedia({ video: true })
             .then(async (stream) => {
               console.log('Webcam access granted, stream received.');
-
               if (videoRef.current) {
                 videoRef.current.srcObject = stream;
                 console.log('Video stream set to video element.');
@@ -112,7 +105,6 @@ const EntranceStream = () => {
               // Create offer
               const offer = await peerConnection.createOffer();
               await peerConnection.setLocalDescription(offer);
-
               console.log('Offer created:', offer);
 
               // Connect to the Kinesis Video Signaling Channel WebSocket
@@ -122,10 +114,7 @@ const EntranceStream = () => {
                 role: KVSWebRTC.Role.MASTER,
                 region,
                 clientId: null, // No clientId for MASTER role
-                credentials: {
-                  accessKeyId,
-                  secretAccessKey,
-                },
+                credentials: { accessKeyId, secretAccessKey },
               });
 
               signalingClientRef.current = signalingClient;
@@ -158,6 +147,47 @@ const EntranceStream = () => {
               });
 
               signalingClient.open();
+
+              // Kinesis Video Streams integration
+              const kinesisVideo = new AWS.KinesisVideo({
+                region,
+                accessKeyId,
+                secretAccessKey,
+              });
+
+              const getEndpointParams = { APIName: 'PUT_MEDIA', StreamName: kinesisVideoStreamName };
+              kinesisVideo.getDataEndpoint(getEndpointParams, (err, data) => {
+                if (err) {
+                  console.log(err, err.stack);
+                } else {
+                  const endpoint = data.DataEndpoint;
+                  const mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'video/webm;codecs=vp8',
+                  });
+
+                  mediaRecorder.ondataavailable = async event => {
+                    if (event.data.size > 0) {
+                      console.log('Sending chunk to Kinesis Video Streams...');
+                      try {
+                        await fetch(endpoint + '/putMedia', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'X-Amz-Date': new Date().toISOString(),
+                            'Authorization': `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${region}/kinesisvideo/aws4_request, SignedHeaders=host;x-amz-date, Signature=${secretAccessKey}`,
+                          },
+                          body: event.data,
+                        });
+                      } catch (error) {
+                        console.error('Error sending chunk to Kinesis Video Streams:', error);
+                      }
+                    }
+                  };
+
+                  mediaRecorder.start(1000); // Record in chunks of 1 second
+                  mediaRecorderRef.current = mediaRecorder;
+                }
+              });
             })
             .catch((err) => {
               console.error('Error accessing webcam:', err);

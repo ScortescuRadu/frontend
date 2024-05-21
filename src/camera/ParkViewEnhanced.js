@@ -14,7 +14,7 @@ const ParkViewEnhanced = () => {
     const cardData = [
         { id: 1, title: 'Card 1', content: 'Lorem ipsum dolor sit amet.' },
     ];
-
+    const [selectedAddress, setSelectedAddress] = useState(localStorage.getItem('selectedAddressOption') || '');
     const [showModal, setShowModal] = useState(false);
     const [entranceSetup, setEntranceSetup] = useState(false);
     const [showForm, setShowForm] = useState(false);
@@ -269,7 +269,7 @@ const ParkViewEnhanced = () => {
 
     return (
         <div style={{ backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
-            <ParkingLots color='#000'/>
+            <ParkingLots color='#000' selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}/>
             <h1 style={{ marginTop: '20px', color: '#fff', fontSize: '2.5em', textAlign: 'center', textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)' }}>
                 Live Park View
             </h1>
@@ -319,7 +319,7 @@ const ParkViewEnhanced = () => {
                         originalImageWidth={originalImageWidth}
                         originalImageHeight={originalImageHeight}
                     />
-                    <div style={{ textAlign: 'center', marginTop: '10px', marginBottom: '10px' }}>
+                    <div style={{ textAlign: 'center', marginTop: '50px', marginBottom: '10px' }}>
                         <button style={{color: 'red'}} onClick={handlePrevButtonClick}>
                             Prev
                         </button>

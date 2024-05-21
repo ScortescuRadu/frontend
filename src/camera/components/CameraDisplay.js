@@ -137,13 +137,44 @@ const CameraDisplay = ({
                 // <ReactPlayer url={formData.cameraName} playing controls width="100%" height="auto" />
                 <VideoPlayer videoUrl={formData.cameraName} />
             )}
-
+            {videoReady && (
+                <>
+                <button
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        padding: '10px',
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        color: 'white',
+                        cursor: 'pointer',
+                    }}
+                    onClick={showCurrentFrame ? handleReturnToVideoClick : handleProcessClick}
+                >
+                    {showCurrentFrame ? 'Return to video' : 'Process'}
+                </button>
+                <button onClick={toggleDrawing}
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '43%',
+                            backgroundColor: 'black',
+                            padding: '10px',
+                            border: '1px solid black',
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: 'white'
+                        }}>
+                    {isDrawingActive ? 'Stop Drawing' : 'Draw'}
+                </button>
+                </>
+            )}
             {selectedOption === 'localVideo' && formData.localVideoPath && (
                 <div>
                     {entranceSetup ? (
                         <EntranceStream videoRef={playerRef} localVideo={formData.localVideoPath} />
                     ) : (
-                        <div ref={mediaContainerRef} style={{ position: 'relative', width: '100%', height: '100%', userSelect: isDrawingActive ? 'none' : 'auto' }}>
+                        <div ref={mediaContainerRef} style={{ position: 'relative', width: '100%', height: '100%', top:40, userSelect: isDrawingActive ? 'none' : 'auto' }}>
                             {!showCurrentFrame ? (
                                 <ReactPlayer
                                     ref={playerRef}
@@ -216,38 +247,6 @@ const CameraDisplay = ({
                                         Find Spots
                                     </button>
                                 )}
-                                </>
-                            )}
-                            {videoReady && (
-                                <>
-                                <button
-                                    style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        padding: '10px',
-                                        background: 'rgba(0, 0, 0, 0.5)',
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                    }}
-                                    onClick={showCurrentFrame ? handleReturnToVideoClick : handleProcessClick}
-                                >
-                                    {showCurrentFrame ? 'Return to video' : 'Process'}
-                                </button>
-                                <button onClick={toggleDrawing}
-                                        style={{
-                                            position: 'absolute',
-                                            top: '10%',
-                                            left: 0,
-                                            backgroundColor: 'black',
-                                            padding: '10px',
-                                            border: '1px solid black',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            color: 'white'
-                                        }}>
-                                    {isDrawingActive ? 'Stop Drawing' : 'Draw'}
-                                </button>
                                 </>
                             )}
                             {Array.isArray(boxesDetails) &&

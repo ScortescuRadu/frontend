@@ -61,7 +61,7 @@ const ParkingLots = ({color='#62728c', selectedAddress, setSelectedAddress}) => 
       >
         <Autocomplete
           options={fetchedOptions}
-          value={selectedAddress}
+          value={selectedAddress || null}
           onChange={handleSelectChange}
           renderInput={(params) => (
             <TextField
