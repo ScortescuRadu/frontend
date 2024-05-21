@@ -17,6 +17,7 @@ const EntranceStream = () => {
   const peerConnectionRef = useRef(null);
   const pendingIceCandidatesRef = useRef([]);
   const [isMasterReady, setIsMasterReady] = useState(false);
+  const signalingClientRef = useRef(null);
 
   useEffect(() => {
     const channelName = 'license-channel';
@@ -31,7 +32,6 @@ const EntranceStream = () => {
         secretAccessKey,
       },
     };
-
     const startStreaming = async () => {
       try {
         console.log('Starting the streaming process...');
@@ -101,8 +101,11 @@ const EntranceStream = () => {
               // Handle ICE candidates
               peerConnection.onicecandidate = event => {
                 if (event.candidate) {
-                  console.log('Sending ICE candidate:', event.candidate);
-                  // Send the candidate to the Kinesis Video Signaling Channel
+                  console.log('Queueing ICE candidate:', event.candidate);
+                  pendingIceCandidatesRef.current.push(event.candidate);
+                  if (signalingClientRef.current && signalingClientRef.current.connectionState === 'connected') {
+                    signalingClientRef.current.sendIceCandidate(event.candidate);
+                  }
                 }
               };
 
@@ -125,20 +128,24 @@ const EntranceStream = () => {
                 },
               });
 
+              signalingClientRef.current = signalingClient;
+
               signalingClient.on('open', async () => {
                 console.log('Connected to signaling channel');
                 signalingClient.sendSdpOffer(offer);
                 setIsMasterReady(true); // Set master ready
+
+                // Send any queued ICE candidates
+                while (pendingIceCandidatesRef.current.length > 0) {
+                  const candidate = pendingIceCandidatesRef.current.shift();
+                  console.log('Sending queued ICE candidate:', candidate);
+                  signalingClient.sendIceCandidate(candidate);
+                }
               });
 
               signalingClient.on('sdpAnswer', async answer => {
                 console.log('Received SDP answer:', answer);
                 await peerConnection.setRemoteDescription(answer);
-                // Add any ICE candidates received before the remote description was set
-                while (pendingIceCandidatesRef.current.length > 0) {
-                  const candidate = pendingIceCandidatesRef.current.shift();
-                  peerConnection.addIceCandidate(candidate);
-                }
               });
 
               signalingClient.on('iceCandidate', candidate => {

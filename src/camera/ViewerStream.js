@@ -10,6 +10,7 @@ const ViewerStream = () => {
   const videoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const pendingIceCandidatesRef = useRef([]);
+  const signalingClientRef = useRef(null);
 
   useEffect(() => {
     const channelName = 'license-channel';
@@ -81,8 +82,11 @@ const ViewerStream = () => {
   
           peerConnection.onicecandidate = event => {
             if (event.candidate) {
-              console.log('Sending ICE candidate:', event.candidate);
-              // Send the candidate to the Kinesis Video Signaling Channel
+              console.log('Queueing ICE candidate:', event.candidate);
+              pendingIceCandidatesRef.current.push(event.candidate);
+              if (signalingClientRef.current && signalingClientRef.current.connectionState === 'connected') {
+                signalingClientRef.current.sendIceCandidate(event.candidate);
+              }
             }
           };
   
@@ -111,7 +115,16 @@ const ViewerStream = () => {
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
             signalingClient.sendSdpOffer(offer);
+  
+            // Send any queued ICE candidates
+            while (pendingIceCandidatesRef.current.length > 0) {
+              const candidate = pendingIceCandidatesRef.current.shift();
+              console.log('Sending queued ICE candidate:', candidate);
+              signalingClient.sendIceCandidate(candidate);
+            }
           });
+  
+          signalingClientRef.current = signalingClient;
   
           signalingClient.on('sdpAnswer', async answer => {
             console.log('Received SDP answer:', answer);
