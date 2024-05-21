@@ -5,6 +5,7 @@ import VideoPlayer from '../VideoPlayer';
 import EntranceStream from '../EntranceStream';
 import test_video from '../tests/camera_test.mp4'
 import DrawingCanvas from './DrawingCanvas';
+import BoxEdit from './BoxEdit';
 
 const CameraDisplay = ({
         selectedOption,
@@ -24,9 +25,11 @@ const CameraDisplay = ({
         originalImageHeight}) => {
     const [showButtons, setShowButtons] = useState(true);
     const [selectedBox, setSelectedBox] = useState(null);
+    const [selectedDrawnBox, setSelectedDrawnBox] = useState(null);
     const mediaContainerRef = useRef(null);
     const [mediaScale, setMediaScale] = useState({ scaleX: 1, scaleY: 1 });
     const [boxesDetails, setBoxesDetails] = useState([]);
+    const [drawnBoxesDetails, setDrawnBoxesDetails] = useState([]);
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
     const [isDrawingActive, setIsDrawingActive] = useState(false);
 
@@ -54,6 +57,20 @@ const CameraDisplay = ({
     );
     };
 
+    const handleDrawnBoxClick = (index, box) => {
+        console.log(`Drawn Box ${index} clicked`, drawnBoxesDetails[index]);
+        setSelectedDrawnBox({
+            ...drawnBoxesDetails[index],
+            index
+        });
+        setDrawnBoxesDetails((prevDetails) =>
+            prevDetails.map((detail, i) => ({
+                ...detail,
+                selected: i === index
+            }))
+        );
+    };
+
     const handleDetailChange = (detailType, value) => {
         if (!selectedBox) return;
         // console.log(`BoxIndex ${boxIndex} clicked`);
@@ -70,6 +87,20 @@ const CameraDisplay = ({
         }));
     };
 
+    const handleDrawnDetailChange = (detailType, value) => {
+        if (!selectedDrawnBox) return;
+        setDrawnBoxesDetails((prevDetails) =>
+            prevDetails.map((detail, i) =>
+                i === selectedDrawnBox.index ? { ...detail, [detailType]: value } : detail
+            )
+        );
+
+        setSelectedDrawnBox((prev) => ({
+            ...prev,
+            [detailType]: value
+        }));
+    };
+
     const initiateDelete = () => {
         setIsConfirmingDelete(true);
     };
@@ -79,6 +110,13 @@ const CameraDisplay = ({
         setBoxesDetails(filteredDetails);
         setIsConfirmingDelete(false);
         setSelectedBox(null);  // Reset selected box
+    };
+
+    const confirmDrawnDelete = () => {
+        const filteredDetails = drawnBoxesDetails.filter((_, i) => i !== selectedDrawnBox.index);
+        setDrawnBoxesDetails(filteredDetails);
+        setIsConfirmingDelete(false);
+        setSelectedDrawnBox(null);
     };
 
     const cancelDelete = () => {
@@ -97,8 +135,8 @@ const CameraDisplay = ({
             selected: false
         }));
         console.log('New boxes:', newBoxes);
-        setBoxesDetails([...boxesDetails, ...newBoxes]);
-        console.log('Updated boxesDetails after saving:', [...boxesDetails, ...newBoxes]);
+        setDrawnBoxesDetails([...drawnBoxesDetails, ...newBoxes]);
+        console.log('Updated drawnBoxesDetails after saving:', [...drawnBoxesDetails, ...newBoxes]);
         setIsDrawingActive(false);
     };
 
@@ -272,10 +310,11 @@ const CameraDisplay = ({
                                 )}
                                 </>
                             )}
-                            {Array.isArray(boxesDetails) &&
-                                boxesDetails.map((detail, index) => (
+                            {/* Display drawn boxes */}
+                            {Array.isArray(drawnBoxesDetails) &&
+                                drawnBoxesDetails.map((detail, index) => (
                                     <div
-                                        key={`box-${index}`}
+                                        key={`drawn-box-${index}`}
                                         style={{
                                             position: 'absolute',
                                             border: detail.selected ? '3px solid blue' : '2px solid red',
@@ -286,10 +325,39 @@ const CameraDisplay = ({
                                             cursor: isDrawingActive ? 'default' : 'pointer',
                                             pointerEvents: isDrawingActive ? 'none' : 'auto'
                                         }}
-                                        onClick={() => handleBoxClick(index)}
+                                        onClick={() => handleDrawnBoxClick(index)}
                                     >
                                         <span style={{
                                             fontSize: `${Math.min((detail.box[2].x - detail.box[0].x) * originalImageWidth * mediaScale.scaleX, (detail.box[2].y - detail.box[0].y) * originalImageHeight * mediaScale.scaleY) / 3}px`,
+                                            userSelect: 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            height: '100%'
+                                        }}>
+                                            {`${detail.level}-${detail.letter}-${detail.number}`}
+                                        </span>
+                                    </div>
+                                ))}
+                            {/* Display server boxes */}
+                            {Array.isArray(boxesDetails) &&
+                                boxesDetails.map((detail, index) => (
+                                    <div
+                                        key={`box-${index}`}
+                                        style={{
+                                            position: 'absolute',
+                                            border: detail.selected ? '3px solid blue' : '2px solid red',
+                                            left: `${detail.box[0] * mediaScale.scaleX}px`,
+                                            top: `${detail.box[1] * mediaScale.scaleY}px`,
+                                            width: `${(detail.box[2] - detail.box[0]) * mediaScale.scaleX}px`,
+                                            height: `${(detail.box[3] - detail.box[1]) * mediaScale.scaleY}px`,
+                                            cursor: isDrawingActive ? 'default' : 'pointer',
+                                            pointerEvents: isDrawingActive ? 'none' : 'auto'
+                                        }}
+                                        onClick={() => handleBoxClick(index)}
+                                    >
+                                        <span style={{
+                                            fontSize: `${Math.min((detail.box[2] - detail.box[0]) * mediaScale.scaleX, (detail.box[3] - detail.box[1]) * mediaScale.scaleY) / 3}px`,
                                             userSelect: 'none',
                                             display: 'flex',
                                             alignItems: 'center',
@@ -300,74 +368,24 @@ const CameraDisplay = ({
                                     </div>
                             ))}
                             {selectedBox && (
-                                <div>
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '0%',
-                                        right: '19%',
-                                        backgroundColor: 'black',
-                                        padding: '5px',
-                                        border: '1px solid black',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        color: 'white'
-                                    }}>
-                                        {!isConfirmingDelete ? (
-                                            <button onClick={initiateDelete} style={{ padding: '5px 10px', marginRight: '10px' }}>
-                                                Delete
-                                            </button>
-                                        ) : (
-                                            <>
-                                                <button onClick={confirmDelete} style={{ padding: '5px 10px', marginRight: '10px', color: 'green' }}>
-                                                    ✔ Confirm
-                                                </button>
-                                                <button onClick={cancelDelete} style={{ padding: '5px 10px', marginRight: '10px', color: 'red' }}>
-                                                    ✖ Cancel
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        top: '0%',
-                                        right: '0%',
-                                        backgroundColor: 'black',
-                                        padding: '10px',
-                                        border: '1px solid black',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        width: '20%',
-                                        color: 'white'
-                                    }}
-                                >
-                                    <React.Fragment>
-                                        {/* Level dropdown */}
-                                        <select
-                                            style={{ width: '30%', margin: '0 5px', backgroundColor: 'black' }}
-                                            value={selectedBox.level}
-                                            onChange={(e) => handleDetailChange('level', e.target.value)}
-                                        >
-                                            <option value="1">1</option>
-                                            <option value="2">2</option>
-                                        </select>
-                                        {/* Letter input */}
-                                        <input
-                                            type="text"
-                                            style={{ width: '30%', margin: '0 5px', backgroundColor: 'black' }}
-                                            value={selectedBox.letter}
-                                            onChange={(e) => handleDetailChange('letter', e.target.value)}
-                                        />
-                                        {/* Number input */}
-                                        <input
-                                            type="number"
-                                            style={{ width: '30%', margin: '0 5px', backgroundColor: 'black' }}
-                                            value={selectedBox.number}
-                                            onChange={(e) => handleDetailChange('number', e.target.value)}
-                                        />
-                                    </React.Fragment>
-                                </div>
-                                </div>
+                                <BoxEdit
+                                    selectedBox={selectedBox}
+                                    isConfirmingDelete={isConfirmingDelete}
+                                    initiateDelete={initiateDelete}
+                                    confirmDelete={confirmDelete}
+                                    cancelDelete={cancelDelete}
+                                    handleDetailChange={handleDetailChange}
+                                />
+                            )}
+                            {selectedDrawnBox && (
+                                <BoxEdit
+                                    selectedBox={selectedDrawnBox}
+                                    isConfirmingDelete={isConfirmingDelete}
+                                    initiateDelete={initiateDelete}
+                                    confirmDelete={confirmDrawnDelete}
+                                    cancelDelete={cancelDelete}
+                                    handleDetailChange={handleDrawnDetailChange}
+                                />
                             )}
                         </div>
                     )}
