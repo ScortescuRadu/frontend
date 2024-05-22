@@ -265,6 +265,7 @@ const CameraDisplay = ({
         }
 
         sendBoxesToBackend();
+        handleModalClose();
     };
 
     return (

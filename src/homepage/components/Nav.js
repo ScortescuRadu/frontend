@@ -6,17 +6,17 @@ const Nav = ({ isLoggedIn }) => {
       <ul className='flex gap-x-10'>
         {/* Other navigation items */}
         <li>
-          <a className='hover:text-accent transition a' href='/news'>
+          <a className='text-white hover:text-orange-500 transition a' href='/news'>
             News
           </a>
         </li>
         <li>
-          <a className='hover:text-accent transition a' href='/map-finder'>
+          <a className='text-white hover:text-orange-500 transition a' href='/map-finder'>
             Map Finder
           </a>
         </li>
         <li>
-          <a className='hover:text-accent transition a' href='/payment'>
+          <a className='text-white hover:text-orange-500 transition a' href='/payment'>
             Pay Parking
           </a>
         </li>

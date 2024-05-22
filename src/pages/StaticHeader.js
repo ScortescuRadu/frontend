@@ -38,9 +38,9 @@ const StaticHeader = () => {
       return (
         <div>
           <Button
-            style={{ color: 'black', backgroundColor: 'orange',
-              marginRight: '10px', borderLeft: '2px solid black',
-              borderBottom: '2px solid black' }}
+            style={{ color: 'black', backgroundColor: 'white',
+              marginRight: '10px', borderLeft: '4px solid purple',
+              borderBottom: '4px solid purple' }}
             component={Link}
             to="/park-view"
             className='btn btn-sm btn-outline hidden lg:flex'
@@ -49,8 +49,8 @@ const StaticHeader = () => {
           </Button>
           <Button
             style={{ color: 'black', backgroundColor: 'yellow',
-              marginRight: '10px', borderLeft: '2px solid black',
-              borderBottom: '2px solid black' }}
+              marginRight: '10px', borderLeft: '4px solid orange',
+              borderBottom: '4px solid orange' }}
             component={Link}
             to="/account"
             className='btn btn-sm btn-outline hidden lg:flex'
@@ -59,8 +59,8 @@ const StaticHeader = () => {
           </Button>
           <Button
             style={{ color: 'black', backgroundColor: 'red',
-            marginRight: '10px', borderLeft: '2px solid black',
-            borderBottom: '2px solid black' }}
+            marginRight: '10px', borderLeft: '4px solid #a30d21',
+            borderBottom: '4px solid #a30d21' }}
             onClick={handleLogout}
             className='btn btn-sm btn-outline hidden lg:flex'
           >
@@ -87,9 +87,9 @@ const StaticHeader = () => {
   };
 
 
-  return <header className={`${isActive ? 'lg:top-0 bg-white shadow-2xl' :
+  return <header className={`${isActive ? 'lg:top-0 bg-black shadow-2xl' :
     'lg:top-0'
-  } bg-yellow-400 py-6 lg:py-4 fixed w-full transition-all z-10`}
+  } bg-black py-6 lg:py-4 fixed w-full transition-all z-10`}
   style={
     {
      border: '2px solid black'
