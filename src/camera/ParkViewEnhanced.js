@@ -318,6 +318,7 @@ const ParkViewEnhanced = () => {
                         boundingBoxes={boundingBoxes}
                         originalImageWidth={originalImageWidth}
                         originalImageHeight={originalImageHeight}
+                        selectedAddress={selectedAddress}
                     />
                     <div style={{ textAlign: 'center', marginTop: '50px', marginBottom: '10px' }}>
                         <button style={{color: 'red'}} onClick={handlePrevButtonClick}>

@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react';
 import ReactPlayer from 'react-player';
 import Webcam from 'react-webcam';
+import axios from 'axios';
 import VideoPlayer from '../VideoPlayer';
 import EntranceStream from '../EntranceStream';
 import test_video from '../tests/camera_test.mp4'
@@ -22,7 +23,8 @@ const CameraDisplay = ({
         handleProcessClick,
         boundingBoxes,
         originalImageWidth,
-        originalImageHeight}) => {
+        originalImageHeight,
+        selectedAddress}) => {
     const [showButtons, setShowButtons] = useState(true);
     const [selectedBox, setSelectedBox] = useState(null);
     const [selectedDrawnBox, setSelectedDrawnBox] = useState(null);
@@ -132,7 +134,8 @@ const CameraDisplay = ({
             level: 1,
             letter: 'A',
             number: 1,
-            selected: false
+            selected: false,
+            is_drawn: true
         }));
         console.log('New boxes:', newBoxes);
         setDrawnBoxesDetails([...drawnBoxesDetails, ...newBoxes]);
@@ -148,6 +151,7 @@ const CameraDisplay = ({
                 letter: 'A',
                 number: 1,
                 selected: false,
+                is_drawn: false
             }))
         );
         // Calculate the scale factors when the component mounts or when the boundingBoxes update
@@ -168,14 +172,100 @@ const CameraDisplay = ({
         };
     }, [boundingBoxes, originalImageWidth, originalImageHeight]);
 
-    useEffect(() => {
-        console.log('Boxes details with coordinates:', boxesDetails.map(detail => ({
-            left: detail.box[0].x * mediaScale.scaleX,
-            top: detail.box[0].y * mediaScale.scaleY,
-            width: (detail.box[2].x - detail.box[0].x) * mediaScale.scaleX,
-            height: (detail.box[2].y - detail.box[0].y) * mediaScale.scaleY,
-        })));
-    }, [boxesDetails, mediaScale]);
+    const areBoxDetailsUnique = () => {
+        const allDetails = [...boxesDetails, ...drawnBoxesDetails];
+        const detailSet = new Set();
+    
+        for (const detail of allDetails) {
+            const detailString = `${detail.level}-${detail.letter}-${detail.number}`;
+            if (detailSet.has(detailString)) {
+                return false;
+            }
+            detailSet.add(detailString);
+        }
+        return true;
+    };
+
+    const confirmPublicImage = async () => {
+        return window.confirm('Do you agree to make the picture public for the purpose of detection improvement?');
+    };
+
+    const sendImageToBackend = async () => {
+        const formData = new FormData();
+        const blob = await fetch(currentFrameImage).then(res => res.blob());
+        const timestamp = new Date().toISOString();
+
+        formData.append('image', blob, `${selectedAddress}_${timestamp}.jpg`);
+        formData.append('street_address', selectedAddress);
+        formData.append('bounding_boxes', JSON.stringify(drawnBoxesDetails));
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/image-dataset/create/', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error sending image to backend:', errorData);
+                alert('Error sending image to backend:', errorData.detail);
+            } else {
+                console.log('Image sent to backend');
+            }
+        } catch (error) {
+            console.error('Error sending image to backend', error);
+        }
+    };
+
+    const sendBoxesToBackend = async () => {
+        const allDetails = [...boxesDetails, ...drawnBoxesDetails].map(detail => ({
+            ...detail,
+            is_drawn: detail.box.hasOwnProperty('x') // Example logic to determine if the box is drawn
+        }));
+        console.log('street:', selectedAddress)
+        console.log(localStorage.getItem("access_token"))
+    
+        const data = {
+            token: localStorage.getItem("access_token"),
+            street_address: selectedAddress,
+            camera_address: 'camera',
+            bounding_boxes: allDetails
+        };
+    
+        try {
+            const response = await fetch('http://127.0.0.1:8000/spot-detection/store_bounding_boxes/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data),
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error data:', errorData);
+            } else {
+                console.log('Boxes sent to backend', allDetails);
+            }
+        } catch (error) {
+            console.error('Error sending boxes to backend', error);
+        }
+    };
+
+    const handleFinishClick = () => {
+        // if (!areBoxDetailsUnique()) {
+        //     alert('There are duplicate boxes with the same details.');
+        //     return;
+        // }
+
+        if (drawnBoxesDetails.length > 0) {
+            if (confirmPublicImage()) {
+                sendImageToBackend();
+            }
+        }
+
+        sendBoxesToBackend();
+    };
 
     return (
         <div>
@@ -387,6 +477,20 @@ const CameraDisplay = ({
                                     handleDetailChange={handleDrawnDetailChange}
                                 />
                             )}
+                            <button
+                                style={{
+                                    position: 'absolute',
+                                    top: -60,
+                                    right: -20,
+                                    padding: '10px',
+                                    background: 'rgba(0, 0, 0, 0.5)',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                }}
+                                onClick={handleFinishClick}
+                            >
+                                Finish
+                            </button>
                         </div>
                     )}
                 </div>
