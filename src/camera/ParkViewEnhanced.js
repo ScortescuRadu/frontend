@@ -11,9 +11,6 @@ import AddCameraImage from './assets/AddCamera.jpg'
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
 const ParkViewEnhanced = () => {
-    const cardData = [
-        { id: 1, title: 'Card 1', content: 'Lorem ipsum dolor sit amet.' },
-    ];
     const [selectedAddress, setSelectedAddress] = useState(localStorage.getItem('selectedAddressOption') || '');
     const [showModal, setShowModal] = useState(false);
     const [entranceSetup, setEntranceSetup] = useState(false);
@@ -26,6 +23,7 @@ const ParkViewEnhanced = () => {
         localVideoPath: ''
     });
     const [connectedCameras, setConnectedCameras] = useState([]);
+    const [cameraData, setCameraData] = useState([]);
     /// LocalVideo
     const [videoReady, setVideoReady] = useState(false);
     const [showCurrentFrame, setShowCurrentFrame] = useState(false);
@@ -42,6 +40,7 @@ const ParkViewEnhanced = () => {
 
     useEffect(() => {
         fetchConnectedCameras();
+        fetchParkingSpots();
     }, []);
     
     const fetchConnectedCameras = async () => {
@@ -53,7 +52,27 @@ const ParkViewEnhanced = () => {
           console.error('Error fetching connected cameras:', error);
         }
     };
-    
+
+    const fetchParkingSpots = async () => {
+      try {
+          const response = await fetch('http://127.0.0.1:8000/parking-spot/by-address/', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Token ${localStorage.getItem('access_token')}`,
+              },
+              body: JSON.stringify({ street_address: selectedAddress }),
+          });
+          if (response.ok) {
+              const data = await response.json();
+              setCameraData(data);
+          } else {
+              console.error('Error fetching parking spots:', response.statusText);
+          }
+      } catch (error) {
+          console.error('Error fetching parking spots:', error);
+      }
+    };
 
     const handleAddCameraClick = () => {
         setShowModal(true);
@@ -203,78 +222,20 @@ const ParkViewEnhanced = () => {
       }
     };
 
-    // const handleFindSpotsClick = async () => {
-    //   setLoading(true);
-
-    //   if (currentFrameImage) {
-    //     const imageBlob = await new Promise(resolve => {
-    //       fetch(currentFrameImage)
-    //         .then(response => response.blob())
-    //         .then(blob => resolve(blob));
-    //     });
-  
-    //     const formDataImage = new FormData();
-    //     // console.log(formDataImage)
-    //     formDataImage.append('image', imageBlob, 'current_frame.jpg');
-    //     const response = await fetch('http://127.0.0.1:8000/spot-detection/process_image/', {
-    //       method: 'POST',
-    //       body: formDataImage,
-    //     });
-
-    //     if (response.ok) {
-    //       const result = await response.json();
-    //       const taskId = result.task_id;
-
-    //       // Poll the Celery task status and get the result
-    //       const pollTaskStatus = async () => {
-    //           const statusResponse = await fetch(`http://127.0.0.1:8000/spot-detection/check_task_status/${taskId}/`);
-    //           const taskStatus = await statusResponse.json();
-
-    //       if (taskStatus.status === 'SUCCESS') {
-    //         // Image processing completed, get the bounding boxes
-    //         const boundingBoxes = taskStatus.result;
-
-    //         // Update state or perform other actions with bounding boxes
-    //         console.log('Bounding Boxes:', boundingBoxes);
-    //         setLoading(false); // Hide loading indicator
-
-    //         // Store bounding boxes in the database (optional)
-    //         // await fetch('http://your-django-backend-url/store_bounding_boxes/', {
-    //         //   method: 'POST',
-    //         //   headers: {
-    //         //     'Content-Type': 'application/json',
-    //         //   },
-    //         //   body: JSON.stringify({
-    //         //     task_id: taskId,
-    //         //     bounding_boxes_json: JSON.stringify(boundingBoxes),
-    //         //   }),
-    //         // });
-    //       } else if (taskStatus.status === 'FAILURE') {
-    //         console.error('Error processing image:', taskStatus.message);
-    //         setLoading(false); // Hide loading indicator
-    //       } else {
-    //         // Task still in progress, continue polling
-    //         setTimeout(pollTaskStatus, 1000);
-    //       }
-    //     };
-
-    //       // Start polling the task status
-    //       pollTaskStatus();
-    //     } else {
-    //       console.error('Error sending image to Django:', response.statusText);
-    //       setLoading(false); // Hide loading indicator
-    //     }
-    //   }
-    // };
-
     return (
-        <div style={{ backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
-            <ParkingLots color='#000' selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}/>
+        <div style={{ backgroundColor: '#1c1c1e', color: '#fff', minHeight: '100vh' }}>
+            <ParkingLots color='#1c1c1e' selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}/>
             <h1 style={{ marginTop: '20px', color: '#fff', fontSize: '2.5em', textAlign: 'center', textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)' }}>
                 Live Park View
             </h1>
-            <CameraGrid title="Parking Spaces" cardData={cardData} onAddCamera={handleAddCameraClick} />
-            <CameraGrid title="Entrances" cardData={cardData} onAddCamera={handleAddEntranceCameraClick} />
+            <div style={sectionTitleStyle}>
+              <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Parking Spaces</h2>
+            </div>
+            <CameraGrid cardData={cameraData} onAddCamera={handleAddCameraClick} />
+            <div style={sectionTitleStyle}>
+              <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Entrances</h2>
+            </div>
+            <CameraGrid title="Entrances" cardData={cameraData} onAddCamera={handleAddEntranceCameraClick} />
         {/* Modal */}
         {showModal && (
             <div style={modalOverlayStyle} onClick={handleModalClose}>
@@ -319,6 +280,7 @@ const ParkViewEnhanced = () => {
                         originalImageWidth={originalImageWidth}
                         originalImageHeight={originalImageHeight}
                         selectedAddress={selectedAddress}
+                        handleModalClose={handleModalClose}
                     />
                     <div style={{ textAlign: 'center', marginTop: '50px', marginBottom: '10px' }}>
                         <button style={{color: 'red'}} onClick={handlePrevButtonClick}>
@@ -384,5 +346,13 @@ const nextButton = {
   borderRadius: '5px',
   cursor: 'pointer',
   outline: 'none'
-}
+};
+
+const sectionTitleStyle = {
+  background: 'linear-gradient(to left, #fff 0%, #000 100%)',
+  padding: '20px',
+  marginTop: '50px',
+  marginBottom: '20px',
+  borderRadius: '10px',
+};
 export default ParkViewEnhanced;

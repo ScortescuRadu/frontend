@@ -24,7 +24,8 @@ const CameraDisplay = ({
         boundingBoxes,
         originalImageWidth,
         originalImageHeight,
-        selectedAddress}) => {
+        selectedAddress,
+        handleModalClose}) => {
     const [showButtons, setShowButtons] = useState(true);
     const [selectedBox, setSelectedBox] = useState(null);
     const [selectedDrawnBox, setSelectedDrawnBox] = useState(null);
