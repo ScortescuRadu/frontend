@@ -41,7 +41,36 @@ const ParkViewEnhanced = () => {
     useEffect(() => {
         fetchConnectedCameras();
         fetchParkingSpots();
+
+        setupCameraDataWebSocket();
+        return () => {
+            if (client.current) {
+                client.current.close();
+            }
+        };
     }, []);
+
+    const setupCameraDataWebSocket = () => {
+      const wsUrl = `ws://localhost:8000/ws/parking_spot_updates/`;
+      client.current = new W3CWebSocket(wsUrl);
+
+      client.current.onopen = () => {
+          console.log('WebSocket connection established');
+      };
+
+      client.current.onmessage = (event) => {
+          console.log('WebSocket message received:', event.data);
+          const update = JSON.parse(event.data);
+
+          if (update.street_address === selectedAddress) {
+              setCameraData(update.camera_data);
+          }
+      };
+
+      client.current.onclose = () => {
+          console.log('WebSocket connection closed');
+      };
+    };
     
     const fetchConnectedCameras = async () => {
         try {
@@ -161,7 +190,7 @@ const ParkViewEnhanced = () => {
       setLoading(false);
     };
 
-    const setupWebSocket = (task_id) => {
+    const setupTaskWebSocket = (task_id) => {
       const wsUrl = `ws://${window.location.hostname}:8000/ws/task_status/${task_id}/`;
       console.log(wsUrl);
       client.current = new W3CWebSocket(wsUrl);
@@ -212,7 +241,7 @@ const ParkViewEnhanced = () => {
               if (data.task_id) {
                   console.log('Processing started, task ID:', data.task_id);
                   // Establish WebSocket connection with the task ID
-                  setupWebSocket(data.task_id);
+                  setupTaskWebSocket(data.task_id);
               }
           })
           .catch(error => {
@@ -349,7 +378,7 @@ const nextButton = {
 };
 
 const sectionTitleStyle = {
-  background: 'linear-gradient(to left, #fff 0%, #000 100%)',
+  background: 'linear-gradient(to left, #fff 0%, #1c1c1e 100%)',
   padding: '20px',
   marginTop: '50px',
   marginBottom: '20px',
