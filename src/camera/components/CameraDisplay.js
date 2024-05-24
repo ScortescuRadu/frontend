@@ -225,14 +225,15 @@ const CameraDisplay = ({
         }));
         console.log('street:', selectedAddress)
         console.log(localStorage.getItem("access_token"))
+        console.log(formData)
     
         const data = {
             token: localStorage.getItem("access_token"),
             street_address: selectedAddress,
-            camera_address: 'camera',
+            camera_address: formData.cameraName || formData.localVideoPath,
             bounding_boxes: allDetails
         };
-    
+
         try {
             const response = await fetch('http://127.0.0.1:8000/spot-detection/store_bounding_boxes/', {
                 method: 'POST',
