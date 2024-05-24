@@ -3,22 +3,47 @@ import Webcam from 'react-webcam';
 
 const CameraManager = () => {
     const [webcams, setWebcams] = useState([]);
+    const [cameraTasks, setCameraTasks] = useState([]);
     const webcamRefs = useRef({});
+
+    useEffect(() => {
+        const fetchImageTasks = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/image-task/by-user/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Token ${localStorage.getItem('access_token')}`,
+                    },
+                    body: JSON.stringify({ token: localStorage.getItem('access_token') }),
+                });
+                const data = await response.json();
+                setCameraTasks(data);
+            } catch (error) {
+                console.error('Error fetching image tasks:', error);
+            }
+        };
+
+        fetchImageTasks();
+    }, []);
 
     useEffect(() => {
         const logConnectedCameras = async () => {
             try {
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const cameras = devices.filter(device => device.kind === 'videoinput');
-                setWebcams(cameras);
-                console.log('Connected Cameras:', cameras);
+                const filteredCameras = cameras.filter(camera => {
+                    return cameraTasks.some(task => task.device_id === camera.deviceId);
+                });
+                setWebcams(filteredCameras);
+                console.log('Connected Cameras:', filteredCameras);
             } catch (error) {
                 console.error('Error fetching connected cameras:', error);
             }
         };
 
         logConnectedCameras();
-    }, []);
+    }, [cameraTasks]);
 
     const captureFrame = async (deviceId) => {
         try {
