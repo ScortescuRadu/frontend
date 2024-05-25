@@ -7,6 +7,8 @@ import { useJsApiLoader, GoogleMap, Marker, Autocomplete, DirectionsRenderer, In
 import React, {useState, useEffect, useRef} from 'react';
 import InputLabel from '@mui/material/InputLabel';
 import { findClosestMarker, getCoordsFromAddress, calculateDistance } from './MapUtils';
+import ImageGallery from '../image_dataset/ImageGallery'
+import LeafletMap from './LeafletMap';
 
 const center = { lat: 45.754364, lng: 21.226750 };
 const MAP_LIBRARIES = ['places']
@@ -219,10 +221,9 @@ const MapPage = () => {
       position='relative'
       flexDirection='column'
       alignItems='center'
-      bgColor='blue.200'
-      bgImage='https://i.pinimg.com/originals/86/cc/bb/86ccbb5469e5192dbdc7c031ca45d0c2.gif'
+      backgroundColor='black'
       bgPos='bottom'
-      h='100vh'
+      h='300vh'
       w='100vw'
     >
       <Box
@@ -296,7 +297,7 @@ const MapPage = () => {
       <GoogleMap
         center={center}
         zoom={15}
-        mapContainerStyle={{ width: '100%', height: '100%' }}
+        mapContainerStyle={{ width: '100%', height: '80%' }}
         options={{
           zoomControl: false,
           streetViewControl: false,
@@ -340,6 +341,8 @@ const MapPage = () => {
         {/* <Marker position={center}/> */}
         {directionResponse && <DirectionsRenderer directions={directionResponse}/>}
       </GoogleMap>
+      <ImageGallery/>
+      <LeafletMap/>
     </Flex>
   );
 };

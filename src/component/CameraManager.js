@@ -143,10 +143,12 @@ const CameraManager = () => {
             formData.append(`device_id_${index}`, frame.device_id);
             formData.append(`type_${index}`, frame.type);
         });
+        const parkingLotAddress = localStorage.getItem('selectedAddressOption') || '';
+        formData.append('parking_lot', parkingLotAddress);
 
         try {
             console.log('Sending frames to backend...');
-            const response = await fetch('http://127.0.0.1:8000/process-frames/', {
+            const response = await fetch('http://127.0.0.1:8000/image-task/process-frames/', {
                 method: 'POST',
                 body: formData,
             });
@@ -205,14 +207,14 @@ const CameraManager = () => {
     useEffect(() => {
         const interval = setInterval(() => {
             captureAndSendFrames();
-        }, 60000); // 60 seconds
+        }, 6000000); // 60 seconds
 
         return () => clearInterval(interval);
     }, [webcams, remoteIpCameras, liveStreamCameras, localVideoCameras]);
 
     return (
         <div>
-            {webcams.map((camera) => (
+            {/* {webcams.map((camera) => (
                 <Webcam
                     key={camera.deviceId}
                     audio={false}
@@ -221,7 +223,7 @@ const CameraManager = () => {
                     videoConstraints={{ deviceId: camera.deviceId }}
                     style={{ display: 'none' }}
                 />
-            ))}
+            ))} */}
             {remoteIpCameras.map((camera, index) => (
                 <ReactPlayer
                     key={`remoteIp-${index}`}
