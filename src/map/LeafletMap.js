@@ -9,6 +9,7 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 
 // Fix marker icons issue with Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -178,7 +179,7 @@ const LeafletMap = () => {
           width: '100%',
           height: '60vh',
           backgroundColor: '#f9f9f9',
-          margin: '40px',
+          margin: '40px auto',
           zIndex: 0,
         }}
       >
@@ -187,6 +188,7 @@ const LeafletMap = () => {
             url={`https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoicmFkdXNjbyIsImEiOiJjbHM0eDJibWoxZmxlMm1ta3kyNWR6bzYzIn0.xR7ZTbKmBsFmIWzSZcEcQQ`}
             attribution='&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> contributors'
           />
+          <MarkerClusterGroup>
           {markers.map((marker, index) => (
             <Marker key={index} position={[marker.lat, marker.lng]} icon={greenSquareIcon}>
               <Popup>
@@ -194,6 +196,7 @@ const LeafletMap = () => {
               </Popup>
             </Marker>
           ))}
+          </MarkerClusterGroup>
           {geoJsonData.length > 0 && (
             <GeoJSON data={geoJsonData} style={() => ({
               color: '#0000ff',
