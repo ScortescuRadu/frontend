@@ -223,7 +223,7 @@ const MapPage = () => {
       alignItems='center'
       backgroundColor='black'
       bgPos='bottom'
-      h='300vh'
+      h='230vh'
       w='100vw'
     >
       <Box
@@ -231,7 +231,7 @@ const MapPage = () => {
           position: 'absolute',
           left: '10%',
           right: '10%',
-          top: '0%', // Adjust top positioning as needed
+          top: '0%',
           height: '80%',
           width: '80%',
           display: 'flex',
@@ -297,7 +297,7 @@ const MapPage = () => {
       <GoogleMap
         center={center}
         zoom={15}
-        mapContainerStyle={{ width: '100%', height: '80%' }}
+        mapContainerStyle={{ width: '100%', height: '60%' }}
         options={{
           zoomControl: false,
           streetViewControl: false,

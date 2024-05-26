@@ -108,7 +108,15 @@ const ImageGallery = () => {
                                 }}
                             />
                             {image.bounding_boxes_json && image.bounding_boxes_json.map((box, boxIndex) => (
-                                <BoundingBox key={boxIndex} box={box.box} scaleX={image.scaleX || 1} scaleY={image.scaleY || 1} />
+                                <BoundingBox
+                                    key={boxIndex}
+                                    is_drawn={box.is_drawn}
+                                    box={box.box}
+                                    scaleX={image.scaleX || 1}
+                                    scaleY={image.scaleY || 1}
+                                    originalImageWidth={image.original_image_width}
+                                    originalImageHeight={image.original_image_height}
+                                />
                             ))}
                         </Grid>
                     ))}

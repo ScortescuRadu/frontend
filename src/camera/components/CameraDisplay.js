@@ -25,7 +25,9 @@ const CameraDisplay = ({
         originalImageWidth,
         originalImageHeight,
         selectedAddress,
-        handleModalClose}) => {
+        handleModalClose,
+        isEntrance,
+        isExit}) => {
     const [showButtons, setShowButtons] = useState(true);
     const [selectedBox, setSelectedBox] = useState(null);
     const [selectedDrawnBox, setSelectedDrawnBox] = useState(null);
@@ -196,9 +198,16 @@ const CameraDisplay = ({
         const blob = await fetch(currentFrameImage).then(res => res.blob());
         const timestamp = new Date().toISOString();
 
+        const allDetails = [...boxesDetails, ...drawnBoxesDetails].map(detail => ({
+            ...detail,
+            is_drawn: detail.box.hasOwnProperty('x')
+        }));
+
         formData.append('image', blob, `${selectedAddress}_${timestamp}.jpg`);
         formData.append('street_address', selectedAddress);
-        formData.append('bounding_boxes', JSON.stringify(drawnBoxesDetails));
+        formData.append('bounding_boxes', JSON.stringify(allDetails));
+        formData.append('original_image_width', originalImageWidth);
+        formData.append('original_image_height', originalImageHeight);
 
         try {
             const response = await fetch('http://127.0.0.1:8000/image-dataset/create/', {
@@ -221,7 +230,7 @@ const CameraDisplay = ({
     const sendBoxesToBackend = async () => {
         const allDetails = [...boxesDetails, ...drawnBoxesDetails].map(detail => ({
             ...detail,
-            is_drawn: detail.box.hasOwnProperty('x') // Example logic to determine if the box is drawn
+            is_drawn: detail.box.hasOwnProperty('x')
         }));
         console.log('street:', selectedAddress)
         console.log(localStorage.getItem("access_token"))
@@ -254,6 +263,43 @@ const CameraDisplay = ({
         }
     };
 
+    const sendEntranceOrExitDataToBackend = async () => {
+        const allDetails = [...boxesDetails, ...drawnBoxesDetails].map(detail => ({
+            ...detail,
+            is_drawn: detail.box.hasOwnProperty('x')
+        }));
+    
+        const data = {
+            token: localStorage.getItem("access_token"),
+            street_address: selectedAddress,
+            camera_address: formData.cameraName || formData.localVideoPath,
+            camera_type: selectedOption,
+            device_id: formData.selectedCamera || null,
+            destination_type: isEntrance ? 'entrance' : 'exit',
+            bounding_boxes: allDetails
+        };
+    
+        try {
+            const response = await fetch('http://127.0.0.1:8000/image-task/create-entrance-exit/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${localStorage.getItem('access_token')}`
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error data:', errorData);
+            } else {
+                console.log('Data sent to backend', data);
+            }
+        } catch (error) {
+            console.error('Error sending data to backend', error);
+        }
+    };
+
     const handleFinishClick = () => {
         // if (!areBoxDetailsUnique()) {
         //     alert('There are duplicate boxes with the same details.');
@@ -266,7 +312,11 @@ const CameraDisplay = ({
             }
         }
 
-        sendBoxesToBackend();
+        if (isEntrance || isExit) {
+            sendEntranceOrExitDataToBackend();
+        } else {
+            sendBoxesToBackend();
+        }
         handleModalClose();
     };
 
@@ -291,7 +341,7 @@ const CameraDisplay = ({
                 // <ReactPlayer url={formData.cameraName} playing controls width="100%" height="auto" />
                 <VideoPlayer videoUrl={formData.cameraName} />
             )}
-            {videoReady && (
+            {videoReady && !isEntrance & !isExit && (
                 <>
                 <button
                     style={{
@@ -325,9 +375,7 @@ const CameraDisplay = ({
             )}
             {selectedOption === 'localVideo' && formData.localVideoPath && (
                 <div>
-                    {entranceSetup ? (
-                        <EntranceStream videoRef={playerRef} localVideo={formData.localVideoPath} />
-                    ) : (
+                        {/* <EntranceStream videoRef={playerRef} localVideo={formData.localVideoPath} /> */}
                         <div ref={mediaContainerRef} style={{ position: 'relative', width: '100%', height: '100%', top:40, userSelect: isDrawingActive ? 'none' : 'auto' }}>
                             {!showCurrentFrame ? (
                                 <ReactPlayer
@@ -495,7 +543,6 @@ const CameraDisplay = ({
                                 Finish
                             </button>
                         </div>
-                    )}
                 </div>
             )}
         </div>

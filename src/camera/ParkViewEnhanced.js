@@ -30,6 +30,8 @@ const ParkViewEnhanced = () => {
     const [currentFrameImage, setCurrentFrameImage] = useState(null);
     const playerRef = useRef(null);
     const [loading, setLoading] = useState(false);
+    const [isEntrance, setIsEntrance] = useState(false);
+    const [isExit, setIsExit] = useState(false);
     //////////////
     /// Image processing through websocket
     /////////////
@@ -104,10 +106,19 @@ const ParkViewEnhanced = () => {
     };
 
     const handleAddCameraClick = () => {
+        setIsEntrance(false);
+        setIsExit(false);
         setShowModal(true);
     };
 
+    const handleAddExitCameraClick = () => {
+      setIsExit(true);
+      setShowModal(true);
+      setEntranceSetup(true);
+    };
+
     const handleAddEntranceCameraClick = () => {
+      setIsEntrance(true);
       setShowModal(true);
       setEntranceSetup(true);
     };
@@ -123,6 +134,8 @@ const ParkViewEnhanced = () => {
         });
         setLoading(false);
         setEntranceSetup(false);
+        setIsEntrance(false);
+        setIsExit(false);
     };
 
     const handleFormSubmit = (event) => {
@@ -260,11 +273,15 @@ const ParkViewEnhanced = () => {
             <div style={sectionTitleStyle}>
               <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Parking Spaces</h2>
             </div>
-            <CameraGrid cardData={cameraData} onAddCamera={handleAddCameraClick} />
+            <CameraGrid title="spot" cardData={cameraData} onAddCamera={handleAddCameraClick} />
             <div style={sectionTitleStyle}>
               <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Entrances</h2>
             </div>
-            <CameraGrid title="Entrances" cardData={cameraData} onAddCamera={handleAddEntranceCameraClick} />
+            <CameraGrid title="entrances" cardData={cameraData} onAddCamera={handleAddEntranceCameraClick} />
+            <div style={sectionTitleStyle}>
+              <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Exits</h2>
+            </div>
+            <CameraGrid title="exits" cardData={cameraData} onAddCamera={handleAddExitCameraClick} />
         {/* Modal */}
         {showModal && (
             <div style={modalOverlayStyle} onClick={handleModalClose}>
@@ -272,7 +289,7 @@ const ParkViewEnhanced = () => {
             {!showForm ? (
               <>
               <h2 style={modalHeader}>Add Camera</h2>
-              <img src={AddCameraImage} alt="Add Camera Animation" style={cameraGif} />
+              {!isExit && !isEntrance &&(<img src={AddCameraImage} alt="Add Camera Animation" style={cameraGif} />)}
               <CameraSetupForm
                 formData={formData}
                 setFormData={setFormData}
@@ -310,6 +327,8 @@ const ParkViewEnhanced = () => {
                         originalImageHeight={originalImageHeight}
                         selectedAddress={selectedAddress}
                         handleModalClose={handleModalClose}
+                        isEntrance={isEntrance}
+                        isExit={isExit}
                     />
                     <div style={{ textAlign: 'center', marginTop: '50px', marginBottom: '10px' }}>
                         <button style={{color: 'red'}} onClick={handlePrevButtonClick}>
