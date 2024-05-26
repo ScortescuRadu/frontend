@@ -24,6 +24,7 @@ const ParkViewEnhanced = () => {
     });
     const [connectedCameras, setConnectedCameras] = useState([]);
     const [cameraData, setCameraData] = useState([]);
+    const [imageTasks, setImageTasks] = useState([]);
     /// LocalVideo
     const [videoReady, setVideoReady] = useState(false);
     const [showCurrentFrame, setShowCurrentFrame] = useState(false);
@@ -40,9 +41,31 @@ const ParkViewEnhanced = () => {
     const [originalImageHeight, setOriginalImageHeight] = useState(null)
     const client = useRef(null);
 
+    const fetchImageTasks = async () => {
+      try {
+            const response = await fetch('http://127.0.0.1:8000/image-task/by-user/', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Token ${localStorage.getItem('access_token')}`,
+              },
+              body: JSON.stringify({ token: localStorage.getItem('access_token') }),
+          });
+          if (response.ok) {
+              const data = await response.json();
+              setImageTasks(data);
+          } else {
+              console.error('Error fetching image tasks:', response.statusText);
+          }
+      } catch (error) {
+          console.error('Error fetching image tasks:', error);
+      }
+    };
+
     useEffect(() => {
         fetchConnectedCameras();
         fetchParkingSpots();
+        fetchImageTasks();
 
         setupCameraDataWebSocket();
         return () => {
@@ -277,11 +300,11 @@ const ParkViewEnhanced = () => {
             <div style={sectionTitleStyle}>
               <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Entrances</h2>
             </div>
-            <CameraGrid title="entrances" cardData={cameraData} onAddCamera={handleAddEntranceCameraClick} />
+            <CameraGrid title="entrance" cardData={imageTasks} onAddCamera={handleAddEntranceCameraClick} />
             <div style={sectionTitleStyle}>
               <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Exits</h2>
             </div>
-            <CameraGrid title="exits" cardData={cameraData} onAddCamera={handleAddExitCameraClick} />
+            <CameraGrid title="exit" cardData={imageTasks} onAddCamera={handleAddExitCameraClick} />
         {/* Modal */}
         {showModal && (
             <div style={modalOverlayStyle} onClick={handleModalClose}>

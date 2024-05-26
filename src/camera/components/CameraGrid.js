@@ -8,7 +8,7 @@ const CameraGrid = ({ title, cardData, onAddCamera }) => {
                     <div style={plusStyle}>+</div>
                     <div style={cardTitleStyle}>Add Camera</div>
                 </div>
-                {title ==="spot" && cardData && cardData.length > 0 && cardData.map((card, index) => (
+                {title === 'spot' && cardData && cardData.length > 0 && cardData.map((card, index) => (
                     <div key={index} style={cameraCardStyle}>
                         <h3 style={h3Style}>{card.camera_address}</h3>
                         <div style={spotsGridContainerStyle}>
@@ -26,6 +26,13 @@ const CameraGrid = ({ title, cardData, onAddCamera }) => {
                         </div>
                     </div>
                 ))}
+                {title !== 'spot' && cardData && cardData.length > 0 && cardData
+                    .filter(card => card.destination_type !== 'spot')
+                    .map((card, index) => (
+                        <div key={index} style={cameraCardStyle}>
+                            <h3 style={h3Style}>{card.camera_address}</h3>
+                        </div>
+                    ))}
             </div>
         </div>
     );
