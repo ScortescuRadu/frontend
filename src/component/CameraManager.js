@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Webcam from 'react-webcam';
 import ReactPlayer from 'react-player';
 import test_video from '../camera/tests/camera_test.mp4';
+import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
 const CameraManager = () => {
     const [webcams, setWebcams] = useState([]);
@@ -11,6 +12,7 @@ const CameraManager = () => {
     const [cameraTasks, setCameraTasks] = useState([]);
     const webcamRefs = useRef({});
     const playerRefs = useRef({});
+    const socketRef = useRef(null);
 
     useEffect(() => {
         const fetchImageTasks = async () => {
@@ -60,6 +62,68 @@ const CameraManager = () => {
         console.log('Remote IP Cameras:', remoteIpTasks.map(task => task.camera_address));
         console.log('Live Stream Cameras:', liveStreamTasks.map(task => task.camera_address));
         console.log('Local Video Cameras:', localVideoTasks.map(task => task.camera_address));
+    }, [cameraTasks]);
+
+    // WebSocket initialization
+    useEffect(() => {
+        const entranceExitTasks = cameraTasks.filter(task => task.destination_type === 'entrance' || task.destination_type === 'exit');
+
+        if (entranceExitTasks.length > 0) {
+            socketRef.current = new W3CWebSocket('ws://localhost:8000/ws/camera_updates/');
+    
+            socketRef.current.onopen = () => {
+                console.log('WebSocket connection opened');
+            };
+    
+            socketRef.current.onclose = () => {
+                console.log('WebSocket connection closed');
+            };
+
+            socketRef.current.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+    
+            socketRef.current.onmessage = (message) => {
+                console.log('WebSocket message received:', message);
+            };
+        }
+
+        // Continuously capture and send frames for entrance and exit cameras
+        const captureAndSendContinuousFrames = async () => {
+            const frames = await Promise.all(entranceExitTasks.map(async (camera) => {
+                if (camera.camera_type === 'localVideo') {
+                    return captureFrameFromUrl(test_video, 'localVideo');
+                } else {
+                    return captureFrameFromUrl(camera.camera_address, camera.camera_type);
+                }
+            }));
+
+            frames.forEach(frame => {
+                if (frame && entranceExitTasks.find(task => task.camera_address === frame.device_id)) {
+                    const task = entranceExitTasks.find(task => task.camera_address === frame.device_id);
+                    if (task && task.destination_type) {  // Ensure destination_type is defined
+                        const message = {
+                            device_id: frame.device_id,
+                            type: frame.type,
+                            destination_type: task.destination_type,  // Use destination_type
+                            image: frame.image  // Convert to a suitable format if necessary
+                        };
+                        socketRef.current.send(JSON.stringify(message));
+                    }
+                }
+            });
+        };
+
+        const interval = setInterval(() => {
+            captureAndSendContinuousFrames();
+        }, 200000); // 2 seconds
+
+        return () => {
+            clearInterval(interval);
+            if (socketRef.current) {
+                socketRef.current.close();
+            }
+        };
     }, [cameraTasks]);
 
     const captureFrame = async (deviceId) => {
