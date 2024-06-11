@@ -1,18 +1,21 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import ReactPlayer from 'react-player';
 import Webcam from 'react-webcam';
 import test_video from '../tests/camera_test.mp4'
 import test_licences from '../tests/license_plates.mp4'
 
-const CameraGrid = ({ title, cardData, onAddCamera }) => {
+const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData }) => {
     const [showVideoModal, setShowVideoModal] = useState(false);
     const [selectedCamera, setSelectedCamera] = useState(null);
     const [cameraType, setCameraType] = useState('');
+    const [ocrText, setOcrText] = useState('');
+    const websocketRef = useRef(null);
     const playerRef = useRef(null);
 
     const handleCardClick = (camera) => {
         setSelectedCamera(camera.camera_address);
         setCameraType(camera.camera_type);
+        console.log('clicked')
         setShowVideoModal(true);
     };
 
@@ -20,6 +23,62 @@ const CameraGrid = ({ title, cardData, onAddCamera }) => {
         setShowVideoModal(false);
         setSelectedCamera(null);
     };
+
+    // WebSocket setup
+    useEffect(() => {
+        if ( showVideoModal === true && playerRef.current && (title === 'entrance' || title === 'exit')) {
+            websocketRef.current = new WebSocket('ws://localhost:8000/ws/entrance_exit_frames/');
+            websocketRef.current.onopen = () => {
+                console.log('WebSocket connection opened');
+            };
+            websocketRef.current.onclose = () => {
+                console.log('WebSocket connection closed');
+            };
+            websocketRef.current.onerror = error => {
+                console.error('WebSocket error:', error);
+            };
+            websocketRef.current.onmessage = message => {
+                const data = JSON.parse(message.data);
+                console.log('WebSocket message received:', data);
+                if (data.ocr_texts && data.ocr_texts.length > 0) {
+                    setOcrText(data.ocr_texts.join(', '));
+                }
+            };
+
+            const captureFrameAndSend = async () => {
+                const canvas = document.createElement('canvas');
+                const videoElement = playerRef.current.getInternalPlayer();
+                if (videoElement) {
+                    canvas.width = videoElement.videoWidth;
+                    canvas.height = videoElement.videoHeight;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                    const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64data = reader.result;
+                        websocketRef.current.send(JSON.stringify({
+                            image: base64data.split(',')[1],  // Remove the data URL part
+                            device_id_0: formData.selectedCamera || 'current_frame',
+                            parking_lot: selectedAddress,
+                            token: localStorage.getItem('access_token')
+                        }));
+                        console.log('Sent frame to WebSocket');
+                    };
+                    reader.readAsDataURL(imageBlob);
+                }
+            };
+
+            const intervalId = setInterval(() => {
+                captureFrameAndSend();
+            }, 1000); // Send every second
+
+            return () => {
+                clearInterval(intervalId);
+                    websocketRef.current.close();
+                };
+            }
+    }, [showVideoModal, playerRef, title, formData, selectedAddress]);
 
     return (
         <div>
@@ -57,6 +116,30 @@ const CameraGrid = ({ title, cardData, onAddCamera }) => {
             {showVideoModal && (
                 <div style={modalOverlayStyle} onClick={handleCloseVideoModal}>
                     <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+                        {ocrText &&
+                            <div style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '10%',
+                                backgroundColor: 'black',
+                                zIndex: 1,
+                            }}>
+                                <p style={{ color: 'white', textAlign: 'center', margin: 0, padding: '10px' }}>
+                                    License Plate: {ocrText}
+                                </p>
+                            </div>
+                        }
+                        {cameraType === 'connectedCamera' && (
+                            <Webcam
+                                audio={false}
+                                videoConstraints={{
+                                    deviceId: selectedCamera,
+                                }}
+                                style={videoPlayerStyle}
+                            />
+                        )}
                         {cameraType === 'connectedCamera' && (
                             <Webcam
                                 audio={false}
@@ -73,6 +156,7 @@ const CameraGrid = ({ title, cardData, onAddCamera }) => {
                                 controls
                                 width="100%"
                                 height="auto"
+                                muted={true}
                             />
                         )}
                         <button onClick={handleCloseVideoModal} style={closeButtonStyle}>Close</button>

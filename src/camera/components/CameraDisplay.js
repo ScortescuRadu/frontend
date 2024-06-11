@@ -303,7 +303,7 @@ const CameraDisplay = ({
         }
     };
 
-     // WebSocket setup
+    // WebSocket setup
     useEffect(() => {
         if (isEntrance || isExit) {
             websocketRef.current = new WebSocket('ws://localhost:8000/ws/entrance_exit_frames/');

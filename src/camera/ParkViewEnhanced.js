@@ -296,15 +296,15 @@ const ParkViewEnhanced = () => {
             <div style={sectionTitleStyle}>
               <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Parking Spaces</h2>
             </div>
-            <CameraGrid title="spot" cardData={cameraData} onAddCamera={handleAddCameraClick} />
+            <CameraGrid title="spot" cardData={cameraData} onAddCamera={handleAddCameraClick} selectedAddress={selectedAddress} formData={formData} />
             <div style={sectionTitleStyle}>
               <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Entrances</h2>
             </div>
-            <CameraGrid title="entrance" cardData={imageTasks} onAddCamera={handleAddEntranceCameraClick} />
+            <CameraGrid title="entrance" cardData={imageTasks} onAddCamera={handleAddEntranceCameraClick} selectedAddress={selectedAddress} formData={formData}/>
             <div style={sectionTitleStyle}>
               <h2 style={{ textAlign: 'center', fontSize: '1.4em' }}>Exits</h2>
             </div>
-            <CameraGrid title="exit" cardData={imageTasks} onAddCamera={handleAddExitCameraClick} />
+            <CameraGrid title="exit" cardData={imageTasks} onAddCamera={handleAddExitCameraClick} selectedAddress={selectedAddress} formData={formData}/>
         {/* Modal */}
         {showModal && (
             <div style={modalOverlayStyle} onClick={handleModalClose}>
