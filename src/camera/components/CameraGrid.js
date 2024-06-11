@@ -12,6 +12,9 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
     const [ocrText, setOcrText] = useState('');
     const websocketRef = useRef(null);
     const playerRef = useRef(null);
+    const [mediaScale, setMediaScale] = useState({ scaleX: 1, scaleY: 1 });
+    const mediaContainerRef = useRef(null);
+    const [originalImageDimensions, setOriginalImageDimensions] = useState({ width: 720, height: 639 });
 
     const handleCardClick = (camera) => {
         setSelectedCamera(camera.camera_address);
@@ -31,6 +34,26 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
         setBoundingBoxes([]);
     };
 
+    useEffect(() => {
+        const calculateScale = () => {
+            const container = mediaContainerRef.current;
+            if (container) {
+                console.log('containet', container.clientWidth, container.clientHeight)
+                const scaleWidth = container.clientWidth / originalImageDimensions.width;
+                const scaleHeight = 490 / originalImageDimensions.height;
+                setMediaScale({ scaleX: scaleWidth, scaleY: scaleHeight });
+                console.log('Container scale factors:', scaleWidth, scaleHeight);
+            }
+        };
+    
+        window.addEventListener('resize', calculateScale);
+        calculateScale(); // Initial calculation
+    
+        return () => {
+            window.removeEventListener('resize', calculateScale);
+        };
+    }, [showVideoModal, originalImageDimensions]);
+
     const fetchBoundingBoxes = async (cameraAddress) => {
         try {
             const response = await fetch('http://localhost:8000/image-task/by-task/', {
@@ -43,12 +66,17 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                     token: localStorage.getItem('access_token'),
                     camera_address: cameraAddress,
                     camera_type: cameraType,
-                    parking_lot: selectedAddress
+                    parking_lot: selectedAddress,
                 }),
-            })
+            });
             if (response.ok) {
                 const data = await response.json();
                 setBoundingBoxes(data.bounding_boxes);
+                setOriginalImageDimensions({
+                    width: data.image_task.original_image_width,
+                    height: data.image_task.original_image_height,
+                });
+                console.log('originalIm', originalImageDimensions)
             } else {
                 console.error('Error fetching bounding boxes:', response.statusText);
             }
@@ -113,6 +141,62 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
             }
     }, [showVideoModal, playerRef, title, formData, selectedAddress]);
 
+    // WebSocket setup for spot
+    useEffect(() => {
+        if (showVideoModal === true && playerRef.current && title === 'spot') {
+            websocketRef.current = new WebSocket('ws://localhost:8000/ws/spot_frames/');
+            websocketRef.current.onopen = () => {
+                console.log('WebSocket connection opened');
+            };
+            websocketRef.current.onclose = () => {
+                console.log('WebSocket connection closed');
+            };
+            websocketRef.current.onerror = error => {
+                console.error('WebSocket error:', error);
+            };
+            websocketRef.current.onmessage = message => {
+                const data = JSON.parse(message.data);
+                console.log('WebSocket message received:', data);
+                if (data.bounding_boxes) {
+                    setBoundingBoxes(data.bounding_boxes);
+                }
+            };
+
+            const captureFrameAndSendSpot = async () => {
+                const canvas = document.createElement('canvas');
+                const videoElement = playerRef.current.getInternalPlayer();
+                if (videoElement) {
+                    canvas.width = videoElement.videoWidth;
+                    canvas.height = videoElement.videoHeight;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                    const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64data = reader.result;
+                        websocketRef.current.send(JSON.stringify({
+                            image: base64data.split(',')[1],  // Remove the data URL part
+                            device_id_0: formData.selectedCamera || 'current_frame',
+                            parking_lot: selectedAddress,
+                            token: localStorage.getItem('access_token')
+                        }));
+                        console.log('Sent frame to WebSocket');
+                    };
+                    reader.readAsDataURL(imageBlob);
+                }
+            };
+
+            const intervalId = setInterval(() => {
+                captureFrameAndSendSpot();
+            }, 1000); // Send every second
+
+            return () => {
+                clearInterval(intervalId);
+                    websocketRef.current.close();
+                };
+            }
+    }, [showVideoModal, playerRef, title, formData, selectedAddress]);
+
     return (
         <div>
             <div style={gridContainerStyle}>
@@ -147,7 +231,7 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                     ))}
             </div>
             {showVideoModal && (
-                <div style={modalOverlayStyle} onClick={handleCloseVideoModal}>
+                <div ref={mediaContainerRef} style={modalOverlayStyle} onClick={handleCloseVideoModal}>
                     <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
                         {ocrText &&
                             <div style={{
@@ -183,33 +267,42 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                                 muted={true}
                             />
                         )}
-                        {boundingBoxes && boundingBoxes.length > 0 && (
-                            <div style={{ position: 'relative', width: '100%' }}>
-                                {boundingBoxes.map((box, index) => {
-                                    const { bounding_boxes_json: [x1, y1, x2, y2], parking_spot, is_drawn } = box;
-                                    const width = x2 - x1;
-                                    const height = y2 - y1;
-
-                                    return (
-                                        <div
-                                            key={index}
-                                            style={{
-                                                position: 'absolute',
-                                                border: is_drawn ? '2px solid green' : '2px solid red',
-                                                top: `${y1}px`,
-                                                left: `${x1}px`,
-                                                width: `${width}px`,
-                                                height: `${height}px`,
-                                            }}
-                                        >
-                                            <span style={{ color: 'white', backgroundColor: 'black' }}>
-                                                {parking_spot.level}/{parking_spot.sector}/{parking_spot.number}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+                        {Array.isArray(boundingBoxes) &&
+                            boundingBoxes.map((detail, index) => (
+                                <div
+                                    key={`box-${index}`}
+                                    style={{
+                                        position: 'absolute',
+                                        border: '2px solid red',
+                                        left: detail.is_drawn
+                                            ? `${detail.bounding_boxes_json[0].x * originalImageDimensions.width * mediaScale.scaleX}px`
+                                            : `${detail.bounding_boxes_json[0] * mediaScale.scaleX}px`,
+                                        top: detail.is_drawn
+                                            ? `${detail.bounding_boxes_json[0].y * originalImageDimensions.height * mediaScale.scaleY}px`
+                                            : `${detail.bounding_boxes_json[1] * mediaScale.scaleY}px`,
+                                        width: detail.is_drawn
+                                            ? `${(detail.bounding_boxes_json[2].x - detail.bounding_boxes_json[0].x) * originalImageDimensions.width * mediaScale.scaleX}px`
+                                            : `${(detail.bounding_boxes_json[2] - detail.bounding_boxes_json[0]) * mediaScale.scaleX}px`,
+                                        height: detail.is_drawn
+                                            ? `${(detail.bounding_boxes_json[2].y - detail.bounding_boxes_json[0].y) * originalImageDimensions.height * mediaScale.scaleY}px`
+                                            : `${(detail.bounding_boxes_json[3] - detail.bounding_boxes_json[1]) * mediaScale.scaleY}px`,
+                                    }}
+                                >
+                                    <span style={{
+                                        fontSize: detail.is_drawn
+                                            ? `${Math.min((detail.bounding_boxes_json[2].x - detail.bounding_boxes_json[0].x) * originalImageDimensions.width * mediaScale.scaleX, (detail.bounding_boxes_json[2].y - detail.bounding_boxes_json[0].y) * originalImageDimensions.height * mediaScale.scaleY) / 3}px`
+                                            : `${Math.min((detail.bounding_boxes_json[2] - detail.bounding_boxes_json[0]) * mediaScale.scaleX, (detail.bounding_boxes_json[3] - detail.bounding_boxes_json[1]) * mediaScale.scaleY) / 3}px`,
+                                        userSelect: 'none',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        height: '100%',
+                                    }}>
+                                        {`${detail.parking_spot.level}-${detail.parking_spot.sector}-${detail.parking_spot.number}`}
+                                    </span>
+                                </div>
+                            ))
+                        }
                         <button onClick={handleCloseVideoModal} style={closeButtonStyle}>Close</button>
                     </div>
                 </div>

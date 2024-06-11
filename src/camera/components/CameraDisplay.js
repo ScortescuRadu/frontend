@@ -164,9 +164,11 @@ const CameraDisplay = ({
         const calculateScale = () => {
           const container = mediaContainerRef.current;
           if (container) {
+            console.log('containet', container.clientWidth, container.clientHeight)
             const scaleWidth = container.clientWidth / originalImageWidth;
             const scaleHeight = container.clientHeight / originalImageHeight;
             setMediaScale({ scaleX: scaleWidth, scaleY: scaleHeight });
+            console.log('Container scale factors:', scaleWidth, scaleHeight);
           }
         };
         // Add a resize listener to recalculate on window resize
@@ -243,7 +245,9 @@ const CameraDisplay = ({
             token: localStorage.getItem("access_token"),
             street_address: selectedAddress,
             camera_address: formData.cameraName || formData.localVideoPath,
-            bounding_boxes: allDetails
+            camera_type: selectedOption,
+            bounding_boxes: allDetails,
+            destination_type: 'spot'
         };
 
         try {
