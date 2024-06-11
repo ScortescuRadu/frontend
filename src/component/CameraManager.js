@@ -54,14 +54,23 @@ const CameraManager = () => {
         const remoteIpTasks = cameraTasks.filter(task => task.camera_type === 'remoteIP');
         const liveStreamTasks = cameraTasks.filter(task => task.camera_type === 'liveStream');
         const localVideoTasks = cameraTasks.filter(task => task.camera_type === 'localVideo');
-
+    
         setRemoteIpCameras(remoteIpTasks);
         setLiveStreamCameras(liveStreamTasks);
         setLocalVideoCameras(localVideoTasks);
-
-        console.log('Remote IP Cameras:', remoteIpTasks.map(task => task.camera_address));
-        console.log('Live Stream Cameras:', liveStreamTasks.map(task => task.camera_address));
-        console.log('Local Video Cameras:', localVideoTasks.map(task => task.camera_address));
+    
+        console.log('Remote IP Cameras:', remoteIpTasks.map(task => ({
+            address: task.camera_address,
+            destination: task.destination_type
+        })));
+        console.log('Live Stream Cameras:', liveStreamTasks.map(task => ({
+            address: task.camera_address,
+            destination: task.destination_type
+        })));
+        console.log('Local Video Cameras:', localVideoTasks.map(task => ({
+            address: task.camera_address,
+            destination: task.destination_type
+        })));
     }, [cameraTasks]);
 
     // WebSocket initialization
@@ -214,6 +223,9 @@ const CameraManager = () => {
             console.log('Sending frames to backend...');
             const response = await fetch('http://127.0.0.1:8000/image-task/process-frames/', {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Token ${localStorage.getItem('access_token')}`,
+                },
                 body: formData,
             });
 
@@ -271,7 +283,7 @@ const CameraManager = () => {
     useEffect(() => {
         const interval = setInterval(() => {
             captureAndSendFrames();
-        }, 6000000); // 60 seconds
+        }, 600000); // 60 seconds
 
         return () => clearInterval(interval);
     }, [webcams, remoteIpCameras, liveStreamCameras, localVideoCameras]);

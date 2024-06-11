@@ -27,7 +27,7 @@ const CameraGrid = ({ title, cardData, onAddCamera }) => {
                     </div>
                 ))}
                 {title !== 'spot' && cardData && cardData.length > 0 && cardData
-                    .filter(card => card.destination_type !== 'spot')
+                    .filter(card => card.destination_type === title)
                     .map((card, index) => (
                         <div key={index} style={cameraCardStyle}>
                             <h3 style={h3Style}>{card.camera_address}</h3>

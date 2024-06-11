@@ -5,6 +5,7 @@ import axios from 'axios';
 import VideoPlayer from '../VideoPlayer';
 import EntranceStream from '../EntranceStream';
 import test_video from '../tests/camera_test.mp4'
+import test_licences from '../tests/license_plates.mp4'
 import DrawingCanvas from './DrawingCanvas';
 import BoxEdit from './BoxEdit';
 
@@ -37,6 +38,7 @@ const CameraDisplay = ({
     const [drawnBoxesDetails, setDrawnBoxesDetails] = useState([]);
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
     const [isDrawingActive, setIsDrawingActive] = useState(false);
+    const [ocrText, setOcrText] = useState('');
 
     const handleFindSpotsClick = () => {
         originalHandleFindSpotsClick();
@@ -300,6 +302,63 @@ const CameraDisplay = ({
         }
     };
 
+    const sendFramesForEntranceOrExit = async (imageBlob) => {
+        const formData = new FormData();
+        formData.append('image_0', imageBlob, 'current_frame.jpg');
+        formData.append('device_id_0', 'current_frame');
+        const parkingLotAddress = localStorage.getItem('selectedAddressOption') || '';
+        formData.append('parking_lot', parkingLotAddress);
+        formData.append('token', localStorage.getItem('access_token'));
+
+        try {
+            console.log('Sending entrance/exit frames to backend...');
+            const response = await fetch('http://127.0.0.1:8000/image-task/process-entrance-exit/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${localStorage.getItem('access_token')}`,
+                },
+                body: formData,
+            });
+    
+            if (!response.ok) {
+                console.error('Error sending entrance/exit frames:', response.statusText);
+            } else {
+                console.log('Entrance/exit frames successfully sent to backend');
+                const responseData = await response.json();
+                if (responseData.detections && responseData.detections.length > 0) {
+                    setOcrText(responseData.detections[0].ocr_text || '');
+                }
+            }
+        } catch (error) {
+            console.error('Error sending entrance/exit frames:', error);
+        }
+    };
+    
+    // useEffect to capture and send frames every second for entrance or exit
+    useEffect(() => {
+        if (isEntrance || isExit) {
+            const captureFrameAndSend = async () => {
+                const canvas = document.createElement('canvas');
+                const videoElement = playerRef.current.getInternalPlayer();
+    
+                if (videoElement) {
+                    canvas.width = videoElement.videoWidth;
+                    canvas.height = videoElement.videoHeight;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                    const imageBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg'));
+                    sendFramesForEntranceOrExit(imageBlob);
+                }
+            };
+    
+            const intervalId = setInterval(() => {
+                captureFrameAndSend();
+            }, 1000); // Send every second
+    
+            return () => clearInterval(intervalId);
+        }
+    }, [isEntrance, isExit, playerRef]);
+
     const handleFinishClick = () => {
         // if (!areBoxDetailsUnique()) {
         //     alert('There are duplicate boxes with the same details.');
@@ -377,13 +436,29 @@ const CameraDisplay = ({
                 <div>
                         {/* <EntranceStream videoRef={playerRef} localVideo={formData.localVideoPath} /> */}
                         <div ref={mediaContainerRef} style={{ position: 'relative', width: '100%', height: '100%', top:40, userSelect: isDrawingActive ? 'none' : 'auto' }}>
+                            {isEntrance || isExit ? (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '10%',
+                                    backgroundColor: 'black',
+                                    zIndex: 1,
+                                }}>
+                                    <p style={{ color: 'white', textAlign: 'center', margin: 0, padding: '10px' }}>
+                                        License Plate: {ocrText}
+                                    </p>
+                                </div>
+                            ) : null}
                             {!showCurrentFrame ? (
                                 <ReactPlayer
                                     ref={playerRef}
-                                    url={test_video} // url={URL.createObjectURL(formData.localVideo)}
+                                    url={isEntrance || isExit ? test_licences : test_video} // url={URL.createObjectURL(formData.localVideo)}
                                     width="100%"
                                     height="100%"
                                     controls={true}
+                                    muted={true}
                                     onReady={() => {
                                         setVideoReady(true);
                                     }}
