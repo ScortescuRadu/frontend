@@ -8,20 +8,53 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
     const [showVideoModal, setShowVideoModal] = useState(false);
     const [selectedCamera, setSelectedCamera] = useState(null);
     const [cameraType, setCameraType] = useState('');
+    const [boundingBoxes, setBoundingBoxes] = useState([]);
     const [ocrText, setOcrText] = useState('');
     const websocketRef = useRef(null);
     const playerRef = useRef(null);
 
     const handleCardClick = (camera) => {
         setSelectedCamera(camera.camera_address);
+        console.log(camera.camera_type)
         setCameraType(camera.camera_type);
         console.log('clicked')
         setShowVideoModal(true);
+        if (title === 'spot')
+        {
+            fetchBoundingBoxes(camera.camera_address);
+        }
     };
 
     const handleCloseVideoModal = () => {
         setShowVideoModal(false);
         setSelectedCamera(null);
+        setBoundingBoxes([]);
+    };
+
+    const fetchBoundingBoxes = async (cameraAddress) => {
+        try {
+            const response = await fetch('http://localhost:8000/image-task/by-task/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${localStorage.getItem('access_token')}`,
+                },
+                body: JSON.stringify({
+                    token: localStorage.getItem('access_token'),
+                    camera_address: cameraAddress,
+                    camera_type: cameraType,
+                    parking_lot: selectedAddress
+                }),
+            })
+            if (response.ok) {
+                const data = await response.json();
+                setBoundingBoxes(data.bounding_boxes);
+            } else {
+                console.error('Error fetching bounding boxes:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error fetching bounding boxes:', error);
+        }
     };
 
     // WebSocket setup
@@ -140,15 +173,6 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                                 style={videoPlayerStyle}
                             />
                         )}
-                        {cameraType === 'connectedCamera' && (
-                            <Webcam
-                                audio={false}
-                                videoConstraints={{
-                                    deviceId: selectedCamera,
-                                }}
-                                style={videoPlayerStyle}
-                            />
-                        )}
                         {cameraType === 'localVideo' && (
                             <ReactPlayer
                                 ref={playerRef}
@@ -158,6 +182,33 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                                 height="auto"
                                 muted={true}
                             />
+                        )}
+                        {boundingBoxes && boundingBoxes.length > 0 && (
+                            <div style={{ position: 'relative', width: '100%' }}>
+                                {boundingBoxes.map((box, index) => {
+                                    const { bounding_boxes_json: [x1, y1, x2, y2], parking_spot, is_drawn } = box;
+                                    const width = x2 - x1;
+                                    const height = y2 - y1;
+
+                                    return (
+                                        <div
+                                            key={index}
+                                            style={{
+                                                position: 'absolute',
+                                                border: is_drawn ? '2px solid green' : '2px solid red',
+                                                top: `${y1}px`,
+                                                left: `${x1}px`,
+                                                width: `${width}px`,
+                                                height: `${height}px`,
+                                            }}
+                                        >
+                                            <span style={{ color: 'white', backgroundColor: 'black' }}>
+                                                {parking_spot.level}/{parking_spot.sector}/{parking_spot.number}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         )}
                         <button onClick={handleCloseVideoModal} style={closeButtonStyle}>Close</button>
                     </div>
