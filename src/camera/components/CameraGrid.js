@@ -15,6 +15,7 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
     const [mediaScale, setMediaScale] = useState({ scaleX: 1, scaleY: 1 });
     const mediaContainerRef = useRef(null);
     const [originalImageDimensions, setOriginalImageDimensions] = useState({ width: 720, height: 639 });
+    const [summaryString, setSummaryString] = useState('');
 
     const handleCardClick = (camera) => {
         setSelectedCamera(camera.camera_address);
@@ -157,8 +158,10 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
             websocketRef.current.onmessage = message => {
                 const data = JSON.parse(message.data);
                 console.log('WebSocket message received:', data);
-                if (data.bounding_boxes) {
-                    setBoundingBoxes(data.bounding_boxes);
+                if (data) {
+                    console.log('summary')
+                    setSummaryString(data.bounding_boxes[1]);
+                    console.log(summaryString)
                 }
             };
 
@@ -248,6 +251,21 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                                 </p>
                             </div>
                         }
+                        {summaryString && (
+                            <div style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '10%',
+                                backgroundColor: 'black',
+                                zIndex: 1,
+                            }}>
+                                <p style={{ color: 'white', textAlign: 'center', margin: 0, padding: '10px' }}>
+                                    {summaryString}
+                                </p>
+                            </div>
+                        )}
                         {cameraType === 'connectedCamera' && (
                             <Webcam
                                 audio={false}
