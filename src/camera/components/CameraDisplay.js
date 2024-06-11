@@ -39,6 +39,7 @@ const CameraDisplay = ({
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
     const [isDrawingActive, setIsDrawingActive] = useState(false);
     const [ocrText, setOcrText] = useState('');
+    const websocketRef = useRef(null);
 
     const handleFindSpotsClick = () => {
         originalHandleFindSpotsClick();
@@ -302,61 +303,60 @@ const CameraDisplay = ({
         }
     };
 
-    const sendFramesForEntranceOrExit = async (imageBlob) => {
-        const formData = new FormData();
-        formData.append('image_0', imageBlob, 'current_frame.jpg');
-        formData.append('device_id_0', 'current_frame');
-        const parkingLotAddress = localStorage.getItem('selectedAddressOption') || '';
-        formData.append('parking_lot', parkingLotAddress);
-        formData.append('token', localStorage.getItem('access_token'));
-
-        try {
-            console.log('Sending entrance/exit frames to backend...');
-            const response = await fetch('http://127.0.0.1:8000/image-task/process-entrance-exit/', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Token ${localStorage.getItem('access_token')}`,
-                },
-                body: formData,
-            });
-    
-            if (!response.ok) {
-                console.error('Error sending entrance/exit frames:', response.statusText);
-            } else {
-                console.log('Entrance/exit frames successfully sent to backend');
-                const responseData = await response.json();
-                if (responseData.detections && responseData.detections.length > 0) {
-                    setOcrText(responseData.detections[0].ocr_text || '');
-                }
-            }
-        } catch (error) {
-            console.error('Error sending entrance/exit frames:', error);
-        }
-    };
-    
-    // useEffect to capture and send frames every second for entrance or exit
+     // WebSocket setup
     useEffect(() => {
         if (isEntrance || isExit) {
+            websocketRef.current = new WebSocket('ws://localhost:8000/ws/entrance_exit_frames/');
+            websocketRef.current.onopen = () => {
+                console.log('WebSocket connection opened');
+            };
+            websocketRef.current.onclose = () => {
+                console.log('WebSocket connection closed');
+            };
+            websocketRef.current.onerror = error => {
+                console.error('WebSocket error:', error);
+            };
+            websocketRef.current.onmessage = message => {
+                const data = JSON.parse(message.data);
+                console.log('WebSocket message received:', data);
+                if (data.ocr_texts && data.ocr_texts.length > 0) {
+                    setOcrText(data.ocr_texts.join(', '));
+                }
+            };
+
             const captureFrameAndSend = async () => {
                 const canvas = document.createElement('canvas');
                 const videoElement = playerRef.current.getInternalPlayer();
-    
                 if (videoElement) {
                     canvas.width = videoElement.videoWidth;
                     canvas.height = videoElement.videoHeight;
                     const context = canvas.getContext('2d');
                     context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                    const imageBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg'));
-                    sendFramesForEntranceOrExit(imageBlob);
+                    const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64data = reader.result;
+                        websocketRef.current.send(JSON.stringify({
+                            image: base64data.split(',')[1],  // Remove the data URL part
+                            device_id_0: formData.selectedCamera || 'current_frame',
+                            parking_lot: selectedAddress,
+                            token: localStorage.getItem('access_token')
+                        }));
+                        console.log('Sent frame to WebSocket');
+                    };
+                    reader.readAsDataURL(imageBlob);
                 }
             };
-    
+
             const intervalId = setInterval(() => {
                 captureFrameAndSend();
             }, 1000); // Send every second
-    
-            return () => clearInterval(intervalId);
-        }
+
+            return () => {
+                clearInterval(intervalId);
+                    websocketRef.current.close();
+                };
+            }
     }, [isEntrance, isExit, playerRef]);
 
     const handleFinishClick = () => {
