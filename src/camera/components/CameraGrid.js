@@ -158,10 +158,15 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
             websocketRef.current.onmessage = message => {
                 const data = JSON.parse(message.data);
                 console.log('WebSocket message received:', data);
-                if (data) {
-                    console.log('summary')
-                    setSummaryString(data.bounding_boxes[1]);
-                    console.log(summaryString)
+                if (data.detail) {
+                    console.error(data.detail);
+                    return;
+                }
+                if (data.summary_string) {
+                    setSummaryString(data.summary_string);
+                }
+                if (data.bounding_boxes) {
+                    setBoundingBoxes(data.bounding_boxes); // Set the updated bounding boxes
                 }
             };
 
@@ -179,8 +184,9 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                         const base64data = reader.result;
                         websocketRef.current.send(JSON.stringify({
                             image: base64data.split(',')[1],  // Remove the data URL part
-                            device_id_0: formData.selectedCamera || 'current_frame',
+                            camera_address: selectedCamera,
                             parking_lot: selectedAddress,
+                            camera_type: cameraType,
                             token: localStorage.getItem('access_token')
                         }));
                         console.log('Sent frame to WebSocket');
@@ -195,9 +201,9 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
 
             return () => {
                 clearInterval(intervalId);
-                    websocketRef.current.close();
-                };
-            }
+                websocketRef.current.close();
+            };
+        }
     }, [showVideoModal, playerRef, title, formData, selectedAddress]);
 
     return (
@@ -291,7 +297,7 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                                     key={`box-${index}`}
                                     style={{
                                         position: 'absolute',
-                                        border: '2px solid red',
+                                        border: `2px solid ${detail.is_empty ? 'green' : 'red'}`,
                                         left: detail.is_drawn
                                             ? `${detail.bounding_boxes_json[0].x * originalImageDimensions.width * mediaScale.scaleX}px`
                                             : `${detail.bounding_boxes_json[0] * mediaScale.scaleX}px`,
