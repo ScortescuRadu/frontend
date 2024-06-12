@@ -179,8 +179,8 @@ const ParkingLotInfo = ({ selectedAddress }) => {
                   isLoading={!userData.weekday_opening_time}/>
                 <CapacityWidget
                   capacity={userData.capacity ? userData.capacity : null}
-                  occupied={34}
-                  reserved={25}
+                  occupied={occupancyData.total_current_occupancy ? occupancyData.total_current_occupancy : null}
+                  reserved={occupancyData.reserved ? occupancyData.reserved : null}
                   isLoading={!userData.capacity}
                 />
                 <AddressWidget

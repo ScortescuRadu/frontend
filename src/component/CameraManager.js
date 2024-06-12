@@ -78,7 +78,7 @@ const CameraManager = () => {
         const entranceExitTasks = cameraTasks.filter(task => task.destination_type === 'entrance' || task.destination_type === 'exit');
 
         if (entranceExitTasks.length > 0) {
-            socketRef.current = new W3CWebSocket('ws://localhost:8000/ws/camera_updates/');
+            socketRef.current = new W3CWebSocket('ws://localhost:8000/ws/gate_camera_updates/');
     
             socketRef.current.onopen = () => {
                 console.log('WebSocket connection opened');
@@ -120,9 +120,11 @@ const CameraManager = () => {
                 if (task && task.destination_type) {  // Ensure destination_type is defined
                     const message = {
                         device_id: frame.device_id,
+                        token: localStorage.getItem('access_token'),
+                        parking_lot: localStorage.getItem('selectedAddressOption') || '',
                         type: frame.type,
                         destination_type: task.destination_type,  // Use destination_type
-                        image: frame.image  // Convert to a suitable format if necessary
+                        image: frame.image  // Directly assign the base64 image string
                     };
                     console.log('Prepared message:', message);
                     if (socketRef.current) {
@@ -148,6 +150,12 @@ const CameraManager = () => {
             }
         };
     }, [cameraTasks]);
+
+    const displayBase64Image = (base64String) => {
+        const imageElement = document.createElement('img');
+        imageElement.src = `data:image/jpeg;base64,${base64String}`;
+        document.body.appendChild(imageElement); // Append the image to the body or any other container
+    };
 
     const captureFrame = async (deviceId) => {
         try {
@@ -182,43 +190,32 @@ const CameraManager = () => {
                 videoSrc = test_video;
             }
     
-            console.log(`Capturing frame from ${type} with URL: ${videoSrc}`);
-    
             return new Promise((resolve, reject) => {
                 const videoElement = document.createElement('video');
                 videoElement.src = videoSrc;
-                videoElement.crossOrigin = 'anonymous'; // Required for capturing frames from different origins
+                videoElement.crossOrigin = 'anonymous';
     
                 videoElement.addEventListener('loadeddata', async () => {
-                    // Create a canvas element
                     const canvas = document.createElement('canvas');
                     canvas.width = videoElement.videoWidth;
                     canvas.height = videoElement.videoHeight;
     
-                    // Draw the video frame to the canvas
                     canvas.getContext('2d').drawImage(videoElement, 0, 0);
                     const imageSrc = canvas.toDataURL('image/jpeg');
-                    console.log(`${type} Image Source:`, imageSrc);
-    
-                    try {
-                        const response = await fetch(imageSrc);
-                        const imageBlob = await response.blob();
-                        resolve({ device_id: url, image: imageBlob, type: type });
-                    } catch (err) {
-                        console.error(`Error capturing frame from ${type}:`, err);
-                        reject(err);
-                    }
+                    const base64Image = imageSrc.split(',')[1];
+
+                    displayBase64Image(base64Image);
+
+                    resolve({ device_id: url, image: base64Image, type: type });
                 });
     
                 videoElement.addEventListener('error', (err) => {
-                    console.error(`Error loading video from ${type}:`, err);
                     reject(err);
                 });
     
-                videoElement.load(); // Load the video
+                videoElement.load();
             });
         } catch (error) {
-            console.error(`Error capturing frame from ${type}:`, error);
             return null;
         }
     };

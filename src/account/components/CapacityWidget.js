@@ -86,6 +86,7 @@ const CapacityWidget = ({ capacity, occupied, reserved, isLoading }) => {
         if (capacity !== null && !isLoading) {
             setCurrentCapacity(parseInt(capacity));
             setEditedCapacity(parseInt(capacity));
+            setOccupiedCapacity(occupiedPercentage);
         }
     }, [capacity, isLoading]);
 

@@ -38,6 +38,7 @@ const VideoPlayer = forwardRef(({ videoUrl, setVideoReady }, ref) => {
           ref={playerRef}
           url={videoUrl}
           onReady={onReady}
+          muted={true}
           controls
           config={{
             file: {

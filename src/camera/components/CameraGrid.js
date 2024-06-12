@@ -191,6 +191,7 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                             token: localStorage.getItem('access_token')
                         }));
                         console.log('Sent frame to WebSocket');
+                        console.log('image', base64data.split(',')[1])
                     };
                     reader.readAsDataURL(imageBlob);
                 }
