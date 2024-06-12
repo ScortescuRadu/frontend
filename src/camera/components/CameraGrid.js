@@ -3,6 +3,7 @@ import ReactPlayer from 'react-player';
 import Webcam from 'react-webcam';
 import test_video from '../tests/camera_test.mp4'
 import test_licences from '../tests/license_plates.mp4'
+import VideoPlayer from '../VideoPlayer';
 
 const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData }) => {
     const [showVideoModal, setShowVideoModal] = useState(false);
@@ -291,6 +292,17 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                                 muted={true}
                             />
                         )}
+                        {cameraType === 'liveStream' && (
+                            <VideoPlayer
+                                videoUrl={selectedCamera}
+                                ref={playerRef}
+                                width="100%"
+                                height="100%"
+                                controls={true}
+                                muted={true}
+                                setVideoReady={() => {}}
+                            />
+                        )}
                         {Array.isArray(boundingBoxes) &&
                             boundingBoxes.map((detail, index) => (
                                 <div
@@ -429,11 +441,17 @@ const modalContentStyle = {
     textAlign: 'center',
     width: '80%',
     height: 'auto',
+    margin: '0 auto',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center'
 };
 
 const videoPlayerStyle = {
     width: '100%',
     height: 'auto',
+    display: 'block',
+    margin: '0 auto',
 };
 
 const closeButtonStyle = {
