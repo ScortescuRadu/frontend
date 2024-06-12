@@ -3,35 +3,8 @@ import { Card, CardContent, Typography, Box, CircularProgress, Button, IconButto
 import Masonry from '@mui/lab/Masonry';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-const InvoiceWidget = ({ selectedAddress }) => {
-    const [invoices, setInvoices] = useState([]);
+const InvoiceWidget = ({ selectedAddress, invoices, fetchInvoices, setTimeFrame, timeFrame }) => {
     const [visibleInvoices, setVisibleInvoices] = useState(3);
-    const [loading, setLoading] = useState(true);
-    const [timeFrame, setTimeFrame] = useState('today'); // Default to 'today'
-
-    useEffect(() => {
-        const fetchInvoices = async () => {
-            try {
-                const response = await fetch('http://localhost:8000/parking-invoice/by-lot/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                    },
-                    body: JSON.stringify({ selectedAddress, timeFrame })
-                });
-
-                const data = await response.json();
-                setInvoices(data);
-                setLoading(false);
-            } catch (error) {
-                console.error('Error fetching invoices:', error);
-                setLoading(false);
-            }
-        };
-
-        fetchInvoices();
-    }, [selectedAddress, timeFrame]);
 
     const loadMore = () => {
         setVisibleInvoices(visibleInvoices + 3);
@@ -51,7 +24,7 @@ const InvoiceWidget = ({ selectedAddress }) => {
                     license_plate: invoice.license_plate
                 })
             });
-            setInvoices(invoices.filter(i => i !== invoice));
+            fetchInvoices(); // Fetch invoices after delete
         } catch (error) {
             console.error('Error deleting invoice:', error);
         }
@@ -62,14 +35,6 @@ const InvoiceWidget = ({ selectedAddress }) => {
             setTimeFrame(newTimeFrame);
         }
     };
-
-    if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
 
     const calculateFinalCost = (timestamp, hourlyPrice) => {
         const now = new Date();

@@ -18,6 +18,8 @@ const ParkingLotInfo = ({ selectedAddress }) => {
     const [userData, setUserData] = useState({});
     const [occupancyData, setOccupancyData] = useState({});
     const [incomeData, setIncomeData] = useState({});
+    const [invoices, setInvoices] = useState([]);
+    const [timeFrame, setTimeFrame] = useState('lastMonth'); // Default to 'today'
 
     const fetchUserData = async () => {
         const fetchUserData = async () => {
@@ -65,13 +67,14 @@ const ParkingLotInfo = ({ selectedAddress }) => {
 
                 const data = await response.json();
                 console.log('Occupancy data:', data);
-                setOccupancyData(data);
+                setOccupancyData({ ...data });
             } catch (error) {
                 console.error('Error fetching occupancy data:', error);
             }
         };
 
         if (selectedAddress) {
+            console.log('fetching ocupancy')
             fetchOccupancyData();
         }
     };
@@ -92,7 +95,7 @@ const ParkingLotInfo = ({ selectedAddress }) => {
 
               const data = await response.json();
               console.log('Income data:', data);
-              setIncomeData(data);
+              setIncomeData({ ...data });
           } catch (error) {
               console.error('Error fetching income data:', error);
           }
@@ -103,11 +106,31 @@ const ParkingLotInfo = ({ selectedAddress }) => {
       }
     };
 
+    const fetchInvoices = async () => {
+        try {
+            const response = await fetch('http://localhost:8000/parking-invoice/by-lot/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                },
+                body: JSON.stringify({ selectedAddress: selectedAddress, timeFrame: timeFrame })
+            });
+    
+            const data = await response.json();
+            setInvoices(data);
+            console.log('invoices', data)
+        } catch (error) {
+            console.error('Error fetching invoices:', error);
+        }
+    };
+
     useEffect(() => {
       fetchUserData();
       fetchOccupancyData();
       fetchIncomeData();
-    }, [selectedAddress]);
+      fetchInvoices();
+    }, [selectedAddress, timeFrame]);
 
     useEffect(() => {
       const socket = new WebSocket('ws://localhost:8000/ws/parking_lot_updates/');
@@ -124,6 +147,7 @@ const ParkingLotInfo = ({ selectedAddress }) => {
               fetchUserData();
               fetchOccupancyData();
               fetchIncomeData();
+              fetchInvoices();
           }
       };
 
@@ -218,7 +242,13 @@ const ParkingLotInfo = ({ selectedAddress }) => {
                     Invoice Management
               </Typography>
             </div>
-            <InvoiceWidget selectedAddress={selectedAddress}/>
+            <InvoiceWidget
+                selectedAddress={selectedAddress} 
+                invoices={invoices} 
+                fetchInvoices={fetchInvoices} 
+                setTimeFrame={setTimeFrame} 
+                timeFrame={timeFrame} 
+            />
             <Divider style={{ margin: '20px 0', backgroundColor: 'white' }} /> {/* Adjust the color as needed */}
             <div style={{
                   padding: '20px',
