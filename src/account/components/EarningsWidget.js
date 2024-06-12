@@ -48,7 +48,7 @@ const EarningsWidget = ({ weeklyData, monthlyData, yearlyData, totalEarnings }) 
     }}>
       <CardContent sx={{ width: '100%' }}>
         <Typography sx={{ fontSize: 18, fontWeight: 'medium', color: '#333', marginBottom: 2 }} gutterBottom>
-          Total Earnings: {totalEarnings.toFixed(2)} EUR
+          Total Earnings: {totalEarnings} EUR
         </Typography>
         <FormControl fullWidth sx={{ marginBottom: 3 }}> {/* Increased margin-bottom */}
           <InputLabel id="timeframe-select-label">Timeframe</InputLabel>

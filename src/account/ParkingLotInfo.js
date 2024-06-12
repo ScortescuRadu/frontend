@@ -12,6 +12,7 @@ import EarningsWidget from './components/EarningsWidget';
 import OccupancyWidget from './components/OccupancyWidget';
 import QrCodeWidget from './components/QrCodeWidget';
 import ParkingLotWidget from './components/ParkingLotWidget';
+import InvoiceWidget from './components/InvoiceWidget';
 
 const ParkingLotInfo = ({ selectedAddress }) => {
     const [userData, setUserData] = useState({});
@@ -188,10 +189,36 @@ const ParkingLotInfo = ({ selectedAddress }) => {
                   initialLng={userData.longitude ? parseFloat(userData.longitude) : null}
                   isFetchLoading={!(userData.latitude && userData.longitude)}
                 />
-                <EarningsWidget weeklyData={weeklyIncomeData} monthlyData={monthlyIncomeData} yearlyData={yearlyIncomeData} totalEarnings={totalEarnings} />
+                <EarningsWidget weeklyData={weeklyIncomeData} monthlyData={monthlyIncomeData} yearlyData={yearlyIncomeData} totalEarnings={incomeData.total_current_income} />
                 <OccupancyWidget dailyData={dailyData} weeklyData={weeklyData} />
                 <QrCodeWidget />
             </Masonry>
+            <Divider style={{ margin: '20px 0', backgroundColor: 'white' }} /> {/* Adjust the color as needed */}
+            <div style={{
+                  padding: '20px',
+                  display: 'flex',
+                  justifyContent: 'center', // Horizontally center the content
+                  alignItems: 'center', // Vertically center the content
+              }}>
+              <Typography
+                  variant="h4"
+                  component="h2"
+                  style={{
+                      textAlign: 'center',
+                      color: 'white',
+                      marginBottom: '20px',
+                      fontWeight: 'bold',
+                      padding: '10px 20px',
+                      border: '2px solid white',
+                      display: 'inline-block', // Ensures the border wraps the text tightly
+                      borderRadius: '5px', // Optionally adds rounded corners to the border
+                      backgroundColor: 'rgba(0, 0, 0, 0.2)' // Optionally adds a slight background tint
+                  }}
+              >
+                    Invoice Management
+              </Typography>
+            </div>
+            <InvoiceWidget selectedAddress={selectedAddress}/>
             <Divider style={{ margin: '20px 0', backgroundColor: 'white' }} /> {/* Adjust the color as needed */}
             <div style={{
                   padding: '20px',
