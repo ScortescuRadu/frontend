@@ -99,6 +99,7 @@ const CameraManager = () => {
 
         // Continuously capture and send frames for entrance and exit cameras
         const captureAndSendContinuousFrames = async () => {
+            console.log('capture entrance/exit frame')
             const frames = await Promise.all(entranceExitTasks.map(async (camera) => {
                 if (camera.camera_type === 'localVideo') {
                     return captureFrameFromUrl(test_video, 'localVideo');
@@ -108,17 +109,30 @@ const CameraManager = () => {
             }));
 
             frames.forEach(frame => {
-                if (frame && entranceExitTasks.find(task => task.camera_address === frame.device_id)) {
-                    const task = entranceExitTasks.find(task => task.camera_address === frame.device_id);
-                    if (task && task.destination_type) {  // Ensure destination_type is defined
-                        const message = {
-                            device_id: frame.device_id,
-                            type: frame.type,
-                            destination_type: task.destination_type,  // Use destination_type
-                            image: frame.image  // Convert to a suitable format if necessary
-                        };
+                console.log('Captured frame:', frame);
+                const frameFilename = frame.device_id.split('/').pop();
+                const task = entranceExitTasks.find(task => {
+                    const taskFilename = task.camera_address.split('/').pop();
+                    console.log('Checking task:', task, 'against frameFilename:', frameFilename);
+                    return taskFilename === frameFilename;
+                });
+                console.log('Matching task:', task);
+                if (task && task.destination_type) {  // Ensure destination_type is defined
+                    const message = {
+                        device_id: frame.device_id,
+                        type: frame.type,
+                        destination_type: task.destination_type,  // Use destination_type
+                        image: frame.image  // Convert to a suitable format if necessary
+                    };
+                    console.log('Prepared message:', message);
+                    if (socketRef.current) {
+                        console.log('Sending message:', message);
                         socketRef.current.send(JSON.stringify(message));
+                    } else {
+                        console.error('WebSocket is not open.');
                     }
+                } else {
+                    console.error('Task or destination_type is not defined for frame:', frame);
                 }
             });
         };

@@ -162,7 +162,7 @@ const CameraDisplay = ({
         );
         // Calculate the scale factors when the component mounts or when the boundingBoxes update
         const calculateScale = () => {
-          const container = mediaContainerRef.current;
+        const container = mediaContainerRef.current;
           if (container) {
             console.log('containet', container.clientWidth, container.clientHeight)
             const scaleWidth = container.clientWidth / originalImageWidth;
@@ -400,10 +400,10 @@ const CameraDisplay = ({
                 <ReactPlayer url={`http://${formData.cameraName}/video`} playing controls width="100%" height="auto" />
             )}
 
-            {selectedOption === 'liveStream' && formData.cameraName && (
+            {/* {selectedOption === 'liveStream' && formData.cameraName && (
                 // <ReactPlayer url={formData.cameraName} playing controls width="100%" height="auto" />
                 <VideoPlayer videoUrl={formData.cameraName} />
-            )}
+            )} */}
             {videoReady && !isEntrance & !isExit && (
                 <>
                 <button
@@ -436,7 +436,9 @@ const CameraDisplay = ({
                 </button>
                 </>
             )}
-            {selectedOption === 'localVideo' && formData.localVideoPath && (
+            {((selectedOption === 'localVideo' && formData.localVideoPath) ||
+             (selectedOption === 'liveStream' && formData.cameraName))
+             && (
                 <div>
                         {/* <EntranceStream videoRef={playerRef} localVideo={formData.localVideoPath} /> */}
                         <div ref={mediaContainerRef} style={{ position: 'relative', width: '100%', height: '100%', top:40, userSelect: isDrawingActive ? 'none' : 'auto' }}>
@@ -456,17 +458,29 @@ const CameraDisplay = ({
                                 </div>
                             ) : null}
                             {!showCurrentFrame ? (
-                                <ReactPlayer
-                                    ref={playerRef}
-                                    url={isEntrance || isExit ? test_licences : test_video} // url={URL.createObjectURL(formData.localVideo)}
-                                    width="100%"
-                                    height="100%"
-                                    controls={true}
-                                    muted={true}
-                                    onReady={() => {
-                                        setVideoReady(true);
-                                    }}
-                                />
+                                selectedOption === 'liveStream' ? (
+                                    <VideoPlayer
+                                        videoUrl={formData.cameraName}
+                                        ref={playerRef}
+                                        width="100%"
+                                        height="100%"
+                                        controls={true}
+                                        muted={true}
+                                        setVideoReady={setVideoReady}
+                                    />
+                                ) : (
+                                    <ReactPlayer
+                                        ref={playerRef}
+                                        url={isEntrance || isExit ? test_licences : test_video} // url={URL.createObjectURL(formData.localVideo)}
+                                        width="100%"
+                                        height="100%"
+                                        controls={true}
+                                        muted={true}
+                                        onReady={() => {
+                                            setVideoReady(true);
+                                        }}
+                                    />
+                                )
                             ) : (
                                 <>
                                 {isDrawingActive ? (

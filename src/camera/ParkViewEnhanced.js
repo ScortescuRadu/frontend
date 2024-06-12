@@ -205,7 +205,7 @@ const ParkViewEnhanced = () => {
 
     const handleProcessClick = () => {
       if (playerRef.current) {
-        const currentTime = playerRef.current.getCurrentTime();
+        // const currentTime = playerRef.current.getCurrentTime();
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
   
