@@ -45,7 +45,7 @@ const InvoiceWidget = ({ selectedAddress }) => {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 },
                 body: JSON.stringify({
-                    parking_lot: invoice.parking_lot,
+                    parking_lot: selectedAddress,
                     timestamp: invoice.timestamp,
                     license_plate: invoice.license_plate
                 })
@@ -111,9 +111,6 @@ const InvoiceWidget = ({ selectedAddress }) => {
                         }}>
                             <Typography sx={{ fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 1 }} gutterBottom>
                                 License Plate: {invoice.license_plate}
-                            </Typography>
-                            <Typography variant="body2" component="div" sx={{ color: '#555', marginBottom: 1 }}>
-                                Parking Lot ID: {invoice.parking_lot}
                             </Typography>
                             <Typography variant="body2" component="div" sx={{ color: '#555', marginBottom: 1 }}>
                                 Timestamp: {new Date(invoice.timestamp).toLocaleString()}
