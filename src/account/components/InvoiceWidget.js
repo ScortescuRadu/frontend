@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, Typography, Box, CircularProgress, Button, IconButton } from '@mui/material';
+import { Card, CardContent, Typography, Box, CircularProgress, Button, IconButton, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import Masonry from '@mui/lab/Masonry';
 import DeleteIcon from '@mui/icons-material/Delete';
 
@@ -7,6 +7,7 @@ const InvoiceWidget = ({ selectedAddress }) => {
     const [invoices, setInvoices] = useState([]);
     const [visibleInvoices, setVisibleInvoices] = useState(3);
     const [loading, setLoading] = useState(true);
+    const [timeFrame, setTimeFrame] = useState('today'); // Default to 'today'
 
     useEffect(() => {
         const fetchInvoices = async () => {
@@ -17,7 +18,7 @@ const InvoiceWidget = ({ selectedAddress }) => {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                     },
-                    body: JSON.stringify({ selectedAddress })
+                    body: JSON.stringify({ selectedAddress, timeFrame })
                 });
 
                 const data = await response.json();
@@ -30,7 +31,7 @@ const InvoiceWidget = ({ selectedAddress }) => {
         };
 
         fetchInvoices();
-    }, [selectedAddress]);
+    }, [selectedAddress, timeFrame]);
 
     const loadMore = () => {
         setVisibleInvoices(visibleInvoices + 3);
@@ -56,6 +57,12 @@ const InvoiceWidget = ({ selectedAddress }) => {
         }
     };
 
+    const handleTimeFrameChange = (event, newTimeFrame) => {
+        if (newTimeFrame !== null) {
+            setTimeFrame(newTimeFrame);
+        }
+    };
+
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -73,6 +80,41 @@ const InvoiceWidget = ({ selectedAddress }) => {
 
     return (
         <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                <ToggleButtonGroup
+                    value={timeFrame}
+                    exclusive
+                    onChange={handleTimeFrameChange}
+                    aria-label="time frame"
+                    sx={{
+                        '& .MuiToggleButton-root': {
+                            backgroundColor: '#ffffff',
+                            color: '#000',
+                            border: '1px solid #000',
+                            borderRadius: '4px',
+                            margin: '0 4px',
+                            '&.Mui-selected': {
+                                backgroundColor: '#000',
+                                color: '#fff',
+                            },
+                            '&:hover': {
+                                backgroundColor: '#333',
+                                color: '#fff',
+                            },
+                        },
+                    }}
+                >
+                    <ToggleButton value="today" aria-label="today">
+                        Today
+                    </ToggleButton>
+                    <ToggleButton value="lastWeek" aria-label="last week">
+                        Last Week
+                    </ToggleButton>
+                    <ToggleButton value="lastMonth" aria-label="last month">
+                        Last Month
+                    </ToggleButton>
+                </ToggleButtonGroup>
+            </Box>
             <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={2}>
                 {invoices.slice(0, visibleInvoices).map((invoice) => (
                     <Card key={invoice.license_plate + invoice.timestamp} sx={{
