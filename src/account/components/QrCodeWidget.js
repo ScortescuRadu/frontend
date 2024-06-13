@@ -3,7 +3,7 @@ import { Card, CardContent, Typography, IconButton, Box } from '@mui/material';
 import PrintIcon from '@mui/icons-material/Print';
 import { QRCodeCanvas } from 'qrcode.react';
 
-const QrCodeWidget = () => {
+const QrCodeWidget = ({ selectedAddress }) => {
     const qrRef = useRef(null);  // Using ref to directly access the QR code canvas
 
     const handlePrint = () => {
@@ -48,11 +48,11 @@ const QrCodeWidget = () => {
             </CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
             <QRCodeCanvas
-                value="https://example.com?param=value"
+                value={selectedAddress}
                 size={230}
                 level={"H"}
                 includeMargin={true}
-                // ref={(node) => { qrRef.current = node ? node.canvas : null; }}
+                ref={qrRef}
             />
             </Box>
         </Card>

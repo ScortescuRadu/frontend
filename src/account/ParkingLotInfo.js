@@ -215,7 +215,7 @@ const ParkingLotInfo = ({ selectedAddress }) => {
                 />
                 <EarningsWidget weeklyData={weeklyIncomeData} monthlyData={monthlyIncomeData} yearlyData={yearlyIncomeData} totalEarnings={incomeData.total_current_income} />
                 <OccupancyWidget dailyData={dailyData} weeklyData={weeklyData} />
-                <QrCodeWidget />
+                <QrCodeWidget selectedAddress={selectedAddress} />
             </Masonry>
             <Divider style={{ margin: '20px 0', backgroundColor: 'white' }} /> {/* Adjust the color as needed */}
             <div style={{
