@@ -190,11 +190,13 @@ const LeafletMap = () => {
           />
           <MarkerClusterGroup>
           {markers.map((marker, index) => (
+            marker.lat && marker.lng ? (
             <Marker key={index} position={[marker.lat, marker.lng]} icon={greenSquareIcon}>
               <Popup>
                 {marker.name}
               </Popup>
             </Marker>
+            ) : null
           ))}
           </MarkerClusterGroup>
           {geoJsonData.length > 0 && (
