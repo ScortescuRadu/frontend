@@ -98,7 +98,9 @@ const StaticHeader = () => {
   >
     <div className='container mx-auto flex justify-between items-center'>
       <a href='#'>
-        <img src={logo} alt=''/>
+        <Link to="/">
+          <img src={logo} alt=''/>
+        </Link>
       </a>
       <div className='hidden lg:flex'>
         <Nav isLoggedIn={isLoggedIn}/>
