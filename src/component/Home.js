@@ -9,10 +9,12 @@ import Product from '../homepage/components/Product'
 import Testimonials from '../homepage/components/Testimonials'
 import Cta from '../homepage/components/Cta'
 import { FooterContainer } from '../homepage/components/Footer'
+import StaticHeader from '../pages/StaticHeader';
 
 import Aos from 'aos'
 import 'aos/dist/aos.css'
 import '../homepage/index.css';
+import FirstPage from '../pages/FirstPage';
 
 const Home = () => {
     // initialize aos
@@ -22,8 +24,9 @@ const Home = () => {
     })
   return (
     <div className='overflow-hidden flex flex-col min-h-screen'>
-      <Header />
-      <Hero />
+      <StaticHeader />
+      <FirstPage />
+      {/* <Hero />
       <Overview />
       <Feature1 />
       <Feature2 />
@@ -31,7 +34,7 @@ const Home = () => {
       <Product />
       <Testimonials />
       <Cta />
-      <div className='flex-grow'></div>
+      <div className='flex-grow'></div> */}
       <FooterContainer />
     </div>
   );
