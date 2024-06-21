@@ -4,6 +4,7 @@ import Webcam from 'react-webcam';
 import test_video from '../tests/camera_test.mp4'
 import test_licences from '../tests/license_plates.mp4'
 import VideoPlayer from '../VideoPlayer';
+import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
 const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData }) => {
     const [showVideoModal, setShowVideoModal] = useState(false);
@@ -17,6 +18,8 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
     const mediaContainerRef = useRef(null);
     const [originalImageDimensions, setOriginalImageDimensions] = useState({ width: 720, height: 639 });
     const [summaryString, setSummaryString] = useState('');
+    const [entrancePlates, setEntrancePlates] = useState({});
+    const [exitPlates, setExitPlates] = useState({});
 
     const handleCardClick = (camera) => {
         setSelectedCamera(camera.camera_address);
@@ -34,6 +37,113 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
         setShowVideoModal(false);
         setSelectedCamera(null);
         setBoundingBoxes([]);
+    };
+
+    useEffect(() => {
+        if (selectedAddress) {
+            fetchLicensePlates();
+        }
+    }, [selectedAddress]);
+
+    useEffect(() => {
+        // WebSocket setup
+        websocketRef.current = new W3CWebSocket('ws://localhost:8000/ws/license-plates/');
+
+        websocketRef.current.onopen = () => {
+            console.log('WebSocket connection opened');
+        };
+
+        websocketRef.current.onclose = () => {
+            console.log('WebSocket connection closed');
+        };
+
+        websocketRef.current.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        websocketRef.current.onmessage = (message) => {
+            const data = JSON.parse(message.data);
+            console.log('WebSocket message received:', data);
+
+            const { type, license_plate, timestamp, camera_address, is_paid } = data.message;
+
+            if (type === 'entrance') {
+                setEntrancePlates((prev) => ({
+                    ...prev,
+                    [camera_address]: [
+                        ...(prev[camera_address] || []).filter(plate => plate.license_plate !== license_plate),
+                        { license_plate, timestamp }
+                    ],
+                }));
+            } else if (type === 'exit') {
+                setExitPlates((prev) => ({
+                    ...prev,
+                    [camera_address]: [
+                        ...(prev[camera_address] || []).filter(plate => plate.license_plate !== license_plate),
+                        { license_plate, timestamp, is_paid }
+                    ],
+                }));
+            }
+        };
+
+        return () => {
+            websocketRef.current.close();
+        };
+    }, []);
+
+    const fetchLicensePlates = async () => {
+        try {
+            const [entrancesResponse, exitsResponse] = await Promise.all([
+                fetch(`http://localhost:8000/entrance/today-entrances/?street_address=${selectedAddress}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Token ${localStorage.getItem('access_token')}`,
+                    },
+                }),
+                fetch(`http://localhost:8000/exit/today-exits/?street_address=${selectedAddress}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Token ${localStorage.getItem('access_token')}`,
+                    },
+                }),
+            ]);
+
+            const entrancesData = await entrancesResponse.json();
+            const exitsData = await exitsResponse.json();
+
+            const entrancePlatesByCamera = {};
+            const exitPlatesByCamera = {};
+
+            entrancesData.forEach((plate) => {
+                if (!entrancePlatesByCamera[plate.camera_address]) {
+                    entrancePlatesByCamera[plate.camera_address] = [];
+                }
+                entrancePlatesByCamera[plate.camera_address] = [
+                    ...entrancePlatesByCamera[plate.camera_address].filter(p => p.license_plate !== plate.license_plate),
+                    plate
+                ];
+            });
+            
+            exitsData.forEach((plate) => {
+                if (!exitPlatesByCamera[plate.camera_address]) {
+                    exitPlatesByCamera[plate.camera_address] = [];
+                }
+                exitPlatesByCamera[plate.camera_address] = [
+                    ...exitPlatesByCamera[plate.camera_address].filter(p => p.license_plate !== plate.license_plate),
+                    plate
+                ];
+            });
+
+            console.log('Entrance Plates By Camera:', entrancePlatesByCamera);
+            console.log('Exit Plates By Camera:', exitPlatesByCamera);
+
+            setEntrancePlates(entrancePlatesByCamera);
+            setExitPlates(exitPlatesByCamera);
+        } catch (error) {
+            console.error('Error fetching license plates:', error);
+        }
     };
 
     useEffect(() => {
@@ -233,13 +343,46 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                         </div>
                     </div>
                 ))}
-                {title !== 'spot' && cardData && cardData.length > 0 && cardData
+                {title === 'entrance' && cardData && cardData.length > 0 && cardData
                     .filter(card => card.destination_type === title)
                     .map((card, index) => (
                         <div key={index} style={cameraCardStyle} onClick={() => handleCardClick(card)}>
                             <h3 style={h3Style}>{card.camera_address}</h3>
+                            <div style={licensePlateContainerStyle}>
+                                {entrancePlates[card.camera_address] && entrancePlates[card.camera_address].map((plate, idx) => (
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            ...licensePlateStyle,
+                                            backgroundColor: 'red',
+                                        }}
+                                    >
+                                        {plate.license_plate}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    ))}
+                ))}
+                {title === 'exit' && cardData && cardData.length > 0 && cardData
+                    .filter(card => card.destination_type === title)
+                    .map((card, index) => (
+                        <div key={index} style={cameraCardStyle} onClick={() => handleCardClick(card)}>
+                            <h3 style={h3Style}>{card.camera_address}</h3>
+                            <div style={licensePlateContainerStyle}>
+                                {exitPlates[card.camera_address] && exitPlates[card.camera_address].map((plate, idx) => (
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            ...licensePlateStyle,
+                                            backgroundColor: plate.is_paid ? 'green' : 'red',
+                                        }}
+                                    >
+                                        {plate.license_plate}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                ))}
             </div>
             {showVideoModal && (
                 <div ref={mediaContainerRef} style={modalOverlayStyle} onClick={handleCloseVideoModal}>
@@ -464,6 +607,20 @@ const closeButtonStyle = {
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer',
+};
+
+const licensePlateContainerStyle = {
+    maxHeight: '150px',
+    overflowY: 'auto',
+    marginTop: '10px',
+};
+
+const licensePlateStyle = {
+    padding: '5px',
+    borderRadius: '4px',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: '5px',
 };
 
 export default CameraGrid;
