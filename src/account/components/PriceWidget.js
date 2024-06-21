@@ -110,7 +110,7 @@ const PriceWidget = ({ price, isLoading }) => {
                     color: '#1a1a1a',
                     marginBottom: 2 // Added some margin-bottom for spacing
                 }}>
-                    {editedPrice !== null ? `${editedPrice.toFixed(2)} EUR` : 'Price not available'}
+                    {editedPrice !== null ? `${parseFloat(editedPrice).toFixed(2)} EUR` : 'Price not available'}
                 </Typography>
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
                     <IconButton onClick={handleIncrease}>

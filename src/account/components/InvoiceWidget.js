@@ -81,7 +81,7 @@ const InvoiceWidget = ({ selectedAddress, invoices, fetchInvoices, setTimeFrame,
                 </ToggleButtonGroup>
             </Box>
             <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={2}>
-                {invoices.slice(0, visibleInvoices).map((invoice) => (
+                {Array.isArray(invoices) && invoices.slice(0, visibleInvoices).map((invoice) => (
                     <Card key={invoice.license_plate + invoice.timestamp} sx={{
                         minWidth: 280,
                         minHeight: 250,

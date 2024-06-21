@@ -1,7 +1,7 @@
 import '../homepage/index.css';
 import React, { useState, useEffect, useRef } from 'react';
 import { Masonry } from '@mui/lab';
-import { Divider, Typography } from '@mui/material';
+import { Divider, Typography, Card, CardContent, Box } from '@mui/material';
 import PriceWidget from './components/PriceWidget';
 import PhoneNumberWidget from './components/PhoneNumberWidget';
 import TimeSettingsWidget from './components/TimeSettingsWidget';
@@ -13,6 +13,7 @@ import OccupancyWidget from './components/OccupancyWidget';
 import QrCodeWidget from './components/QrCodeWidget';
 import ParkingLotWidget from './components/ParkingLotWidget';
 import InvoiceWidget from './components/InvoiceWidget';
+const placeholderImageUrl = './assets/spot.jpg';
 
 const ParkingLotInfo = ({ selectedAddress }) => {
     const [userData, setUserData] = useState({});
@@ -130,6 +131,7 @@ const ParkingLotInfo = ({ selectedAddress }) => {
       fetchOccupancyData();
       fetchIncomeData();
       fetchInvoices();
+      console.log('selectedAddress', selectedAddress)
     }, [selectedAddress, timeFrame]);
 
     useEffect(() => {
@@ -192,6 +194,8 @@ const ParkingLotInfo = ({ selectedAddress }) => {
 
     return (
        <div style={{ padding: '20px', backgroundColor: '#62728c' }}>
+        {selectedAddress !== null ? (
+            <>
             <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={4}>
                 <CityCardWidget cityName={userData.cityName}/>
                 <PriceWidget price={userData.price ? userData.price : 0} isLoading={!userData.price}/>
@@ -275,6 +279,30 @@ const ParkingLotInfo = ({ selectedAddress }) => {
               </Typography>
             </div>
             <ParkingLotWidget selectedAddress={selectedAddress}/>
+            </>
+            ) : (
+                <Box display="flex" justifyContent="center" alignItems="center" height="82vh">
+                <Card sx={{
+                    minWidth: 300,
+                    maxWidth: 500,
+                    backgroundColor: '#ffffff',
+                    boxShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+                    border: '1px solid #ddd',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    textAlign: 'center'
+                }}>
+                    <CardContent>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#333', mb: 2 }}>
+                            Welcome
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#555', mb: 2 }}>
+                            Start configuring your parking lot by clicking on the + sign in the top right of the screen.
+                        </Typography>
+                    </CardContent>
+                </Card>
+            </Box>
+            )}
         </div>
     );
 }
