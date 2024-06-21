@@ -233,8 +233,29 @@ const CameraDisplay = ({
     };
 
     const sendBoxesToBackend = async () => {
+        const convertBox = (box) => {
+            console.log('converting')
+            if (Array.isArray(box) && box[0].hasOwnProperty('x') && box[0].hasOwnProperty('y')) {
+                const originalWidth = originalImageWidth;
+                const originalHeight = originalImageHeight;
+
+                // Get the min and max values for x and y to form the bounding box
+                const xValues = box.map(point => point.x * originalWidth);
+                const yValues = box.map(point => point.y * originalHeight);
+
+                const xmin = Math.min(...xValues);
+                const ymin = Math.min(...yValues);
+                const xmax = Math.max(...xValues);
+                const ymax = Math.max(...yValues);
+
+                return [xmin, ymin, xmax, ymax];
+            }
+            return box;
+        };
+    
         const allDetails = [...boxesDetails, ...drawnBoxesDetails].map(detail => ({
             ...detail,
+            box: convertBox(detail.box),
             is_drawn: detail.box.hasOwnProperty('x')
         }));
         console.log('street:', selectedAddress)
