@@ -49,13 +49,13 @@ const ParkingLotWidget = ({ selectedAddress }) => {
           </MenuItem>
         ))}
       </Select>
-      <Box>
+      {/* <Box>
         {Object.entries(parkingLevels[selectedLevel]).map(([section, { occupied, capacity }]) => (
           <Typography key={section} sx={{ mb: 1 }}>
             Section {section}: {occupied}/{capacity}
           </Typography>
         ))}
-      </Box>
+      </Box> */}
       {/* Placeholder for parking map */}
       <Suspense fallback={<div>Loading...</div>}>
         <ParkingLot3D selectedAddress={selectedAddress}/>

@@ -9,6 +9,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
+import axios from 'axios';
 import * as THREE from 'three';
 import { TextureLoader } from 'three';
 import spot from '../assets/spot.jpg';
@@ -46,7 +47,7 @@ const HoverEffect = ({ editTile, currentType, editing, setHoveredTileInfo }) => 
         if (editing && currentType) {
           intersect.object.material.opacity = 0.5;
         } else {
-          intersect.object.material.opacity = 1.0;
+          intersect.object.material.opacity = 0.9;
         }
       } else {
         setHoveredTileInfo(null);
@@ -87,7 +88,9 @@ const ParkingLot3D = ({ selectedAddress }) => {
   const [rotation, setRotation] = useState(0);
   const [isChanged, setIsChanged] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [isLoading, setIsLoading] = useState(true); // Start with loading state
+  const [isLoading, setIsLoading] = useState(true);
+  const [socket, setSocket] = useState(null);
+  const tilesRef = useRef({});
 
   const loadedTextures = useLoader(TextureLoader, Object.values(textures));
   const textureMap = {
@@ -106,12 +109,85 @@ const ParkingLot3D = ({ selectedAddress }) => {
     loadTiles();
   }, [selectedAddress]);
 
+  useEffect(() => {
+    const newSocket = new WebSocket('ws://localhost:8000/ws/parking_spot_updates/');
+    setSocket(newSocket);
+  
+    newSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.street_address === selectedAddress) {
+        const updatedTiles = { ...tiles };
+        data.camera_data.forEach((camera) => {
+          camera.spots.forEach((spot) => {
+            const tileKey = `${spot.level},${spot.sector}${spot.number}`;
+            const matchingTile = Object.entries(updatedTiles).find(
+              ([key, value]) => 
+                value.type === 'parking' && 
+                value.sector === spot.sector && 
+                value.number === spot.number
+            );
+            if (matchingTile) {
+              updatedTiles[matchingTile[0]].is_occupied = spot.is_occupied;
+            }
+          });
+        });
+        tilesRef.current = updatedTiles;
+        setTiles(updatedTiles);
+      }
+    };
+  
+    return () => {
+      newSocket.close();
+    };
+  }, [selectedAddress, tiles]);
+
+  useEffect(() => {
+    const fetchInitialSpots = async () => {
+      try {
+        const response = await axios.post('http://localhost:8000/parking-spot/by-address/', {
+          street_address: selectedAddress,
+        });
+  
+        const data = response.data;
+        const updatedTiles = { ...tilesRef.current };
+
+        console.log("Initial spots data:", data);
+        console.log('searching in', updatedTiles)
+  
+        data.forEach((camera) => {
+          camera.spots.forEach((spot) => {
+            const matchingTile = Object.entries(updatedTiles).find(
+              ([key, value]) => 
+                value.type === 'parking' && 
+                value.sector === spot.sector && 
+                value.number === spot.number
+            );
+            if (matchingTile) {
+              updatedTiles[matchingTile[0]].is_occupied = spot.is_occupied;
+            }
+          });
+        });
+
+        console.log("Updated tiles with initial spots:", updatedTiles);
+  
+        tilesRef.current = updatedTiles;
+        setTiles(updatedTiles);
+      } catch (error) {
+        console.error('Error fetching initial spots:', error);
+      }
+    };
+  
+    loadTiles().then(fetchInitialSpots);
+  }, [selectedAddress]);
+
   const saveTiles = async () => {
     const access_token = localStorage.getItem('access_token');
     const url = 'http://localhost:8000/tile/map/';
 
+    tilesRef.current = tiles;
+
     const filteredTiles = Object.fromEntries(
-      Object.entries(tiles).map(([key, value]) => [
+      Object.entries(tilesRef.current).map(([key, value]) => [
         key,
         {
           type: value.type,
@@ -177,6 +253,7 @@ const ParkingLot3D = ({ selectedAddress }) => {
         );
 
         setTiles(mappedTiles);
+        tilesRef.current = mappedTiles;
       } else {
         console.error('Failed to load tiles');
       }
@@ -195,6 +272,7 @@ const ParkingLot3D = ({ selectedAddress }) => {
         setTiles((prev) => {
           const updatedTiles = { ...prev };
           delete updatedTiles[position];
+          tilesRef.current = updatedTiles
           return updatedTiles;
         });
       } else {
@@ -207,10 +285,11 @@ const ParkingLot3D = ({ selectedAddress }) => {
           rotation: typeKey === 'parking' ? rotation : 0,
         };
 
-        setTiles((prev) => ({
-          ...prev,
-          [position]: tileData,
-        }));
+        setTiles((prev) => {
+          const updatedTiles = { ...prev, [position]: tileData };
+          tilesRef.current = updatedTiles;
+          return updatedTiles;
+        });
         if (typeKey === 'parking') {
           setSectorNumbers((prev) => ({ ...prev, [sector]: newNumber }));
           setNumber(newNumber + 1);
@@ -291,6 +370,7 @@ const ParkingLot3D = ({ selectedAddress }) => {
     startTransition(() => {
       console.log('Edits confirmed.');
       setLastConfirmedTiles(tiles);
+      tilesRef.current = tiles;
       setIsChanged(false);
       setIsLoading(false);
       saveTiles();
@@ -302,6 +382,7 @@ const ParkingLot3D = ({ selectedAddress }) => {
     setIsLoading(true);
     startTransition(() => {
       setTiles(lastConfirmedTiles);
+      tilesRef.current = lastConfirmedTiles;
       console.log('Edits cancelled.');
       setIsChanged(false);
       setIsLoading(false);
@@ -414,7 +495,7 @@ const ParkingLot3D = ({ selectedAddress }) => {
             <PerspectiveCamera makeDefault position={[0, 25, 0]} fov={45} />
             <gridHelper args={[20, 20]} />
             <HoverEffect editTile={editTile} currentType={currentType} editing={editing} setHoveredTileInfo={setHoveredTileInfo} />
-            {Object.entries(tiles).map(([key, { texture, rotation, sector, number }]) => {
+            {Object.entries(tilesRef.current).map(([key, { type, texture, rotation, sector, number, is_occupied }]) => {
               const [x, z] = key.split(',').map(Number);
               return (
                 <Plane
@@ -425,7 +506,21 @@ const ParkingLot3D = ({ selectedAddress }) => {
                   visible={true}
                   userData={{ isTile: true, tileInfo: { sector, number } }}
                 >
-                  <meshStandardMaterial attach="material" map={texture} />
+                  {type === 'parking' && (
+                    <meshStandardMaterial 
+                      attach="material" 
+                      map={texture} 
+                      color={is_occupied ? 'red' : 'green'} 
+                      opacity={0.9} 
+                      transparent={true} 
+                    />
+                  )}
+                  {type !== 'parking' && (
+                    <meshStandardMaterial 
+                      attach="material" 
+                      map={texture} 
+                    />
+                  )}
                 </Plane>
               );
             })}
