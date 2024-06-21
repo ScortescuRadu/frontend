@@ -20,6 +20,7 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
     const [summaryString, setSummaryString] = useState('');
     const [entrancePlates, setEntrancePlates] = useState({});
     const [exitPlates, setExitPlates] = useState({});
+    const [imageSrc, setImageSrc] = useState('');
 
     const handleCardClick = (camera) => {
         setSelectedCamera(camera.camera_address);
@@ -29,6 +30,7 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
         setShowVideoModal(true);
         if (title === 'spot')
         {
+            console.log('fetching bounding boxes')
             fetchBoundingBoxes(camera.camera_address);
         }
     };
@@ -276,8 +278,9 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                 if (data.summary_string) {
                     setSummaryString(data.summary_string);
                 }
-                if (data.bounding_boxes) {
-                    setBoundingBoxes(data.bounding_boxes); // Set the updated bounding boxes
+                if (data.image_data) {
+                    const imageSrc = `data:image/jpeg;base64,${data.image_data}`;
+                    setImageSrc(imageSrc); // Update the state to display the image
                 }
             };
 
@@ -447,7 +450,19 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                                 setVideoReady={() => {}}
                             />
                         )}
-                        {Array.isArray(boundingBoxes) &&
+                        {imageSrc && (
+                            <img 
+                                src={imageSrc} 
+                                alt="Processed frame" 
+                                style={{ 
+                                    width: '91%', 
+                                    height: 'auto', 
+                                    display: 'block', 
+                                    margin: '0 auto' 
+                                }} 
+                            />
+                        )}
+                        {/* {Array.isArray(boundingBoxes) &&
                             boundingBoxes.map((detail, index) => (
                                 <div
                                     key={`box-${index}`}
@@ -482,7 +497,7 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                                     </span>
                                 </div>
                             ))
-                        }
+                        } */}
                         <button onClick={handleCloseVideoModal} style={closeButtonStyle}>Close</button>
                     </div>
                 </div>
