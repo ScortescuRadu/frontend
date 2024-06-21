@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Grid, Button, Typography, Modal } from '@mui/material';
 import { ReactTyped } from "react-typed";
 import BoundingBox from './BoundingBox';
+import Image1 from './assets/dataset-1.jpeg';
+import Image2 from './assets/dataset-2.jpeg';
+import Image3 from './assets/dataset-3.jpeg';
 
 const backendUrl = 'http://127.0.0.1:8000'
 
@@ -74,16 +77,6 @@ const ImageGallery = () => {
                     With a large community of active users, our dataset is public and covers a wide range of scenarios!
                 </Typography>
             </div>
-            <div style={{ marginTop: '16px', textAlign: 'center' }} >
-                <Button 
-                    variant='contained'
-                    style={{ backgroundColor: 'white', color: 'black', padding: '12px' }}
-                    href={`${backendUrl}/path/to/dataset.zip`} 
-                    download
-                >
-                    Download Dataset
-                </Button>
-            </div>
             <Box
                 p={4}
                 bgcolor='white'
@@ -93,40 +86,27 @@ const ImageGallery = () => {
                 mt={6}
             >
                 <Grid container spacing={2} justifyContent='center'>
-                    {images.map((image, index) => (
+                    {[Image1, Image2, Image3].map((image, index) => (
                         <Grid item xs={12} sm={6} md={4} key={index} style={{ position: 'relative' }}>
                             <img
-                                src={`${backendUrl}${image.image}`}
+                                src={image}
                                 alt={`Image ${index + 1}`}
                                 style={{ width: '100%', cursor: 'pointer' }}
-                                onClick={() => handleImageClick(image)}
-                                onLoad={(e) => {
-                                    const { scaleX, scaleY } = calculateScale(e.target);
-                                    image.scaleX = scaleX;
-                                    image.scaleY = scaleY;
-                                    setImages((prevImages) => prevImages.map((img, idx) => idx === index ? { ...img, scaleX, scaleY } : img)); // Force re-render to update bounding boxes
-                                }}
                             />
-                            {image.bounding_boxes_json && image.bounding_boxes_json.map((box, boxIndex) => (
-                                <BoundingBox
-                                    key={boxIndex}
-                                    is_drawn={box.is_drawn}
-                                    box={box.box}
-                                    scaleX={image.scaleX || 1}
-                                    scaleY={image.scaleY || 1}
-                                    originalImageWidth={image.original_image_width}
-                                    originalImageHeight={image.original_image_height}
-                                />
-                            ))}
                         </Grid>
                     ))}
                 </Grid>
 
-                {images.length > 0 && (
-                    <Button variant='contained' color='primary' style={{ marginTop: '16px' }} onClick={handleSeeMore}>
-                        See More
+                <div style={{ marginTop: '16px', textAlign: 'center' }} >
+                    <Button 
+                        variant='contained'
+                        style={{ backgroundColor: 'black', color: 'white', padding: '12px' }}
+                        href={'https://frog-happy-uniformly-1.ngrok-free.app/image-dataset/download-dataset/'} 
+                        download
+                    >
+                        Download Dataset
                     </Button>
-                )}
+                </div>
 
                 <Modal
                     open={Boolean(selectedImage)}
