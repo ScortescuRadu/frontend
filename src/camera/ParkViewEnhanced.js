@@ -73,7 +73,7 @@ const ParkViewEnhanced = () => {
                 client.current.close();
             }
         };
-    }, []);
+    }, [selectedAddress]);
 
     const setupCameraDataWebSocket = () => {
       const wsUrl = `ws://localhost:8000/ws/parking_spot_updates/`;
@@ -108,6 +108,7 @@ const ParkViewEnhanced = () => {
     };
 
     const fetchParkingSpots = async () => {
+      console.log('searcing by address', selectedAddress)
       try {
           const response = await fetch('http://127.0.0.1:8000/parking-spot/by-address/', {
               method: 'POST',
