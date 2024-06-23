@@ -34,10 +34,9 @@ export const header = {
 };
 
 export const nav = [
-  { name: 'Features', href: '/' },
-  { name: 'About us', href: '/' },
-  { name: 'Pricing', href: '/' },
-  { name: 'Feedback', href: '/' },
+  { name: 'News', href: '/news' },
+  { name: 'Map Finder', href: '/map-finder' },
+  { name: 'Pay Parking', href: '/payment' },
 ];
 
 export const hero = {
