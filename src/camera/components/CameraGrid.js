@@ -450,17 +450,29 @@ const CameraGrid = ({ title, cardData, onAddCamera, selectedAddress, formData })
                                 setVideoReady={() => {}}
                             />
                         )}
-                        {imageSrc && (
-                            <img 
-                                src={imageSrc} 
-                                alt="Processed frame" 
-                                style={{ 
-                                    width: '91%', 
-                                    height: 'auto', 
-                                    display: 'block', 
-                                    margin: '0 auto' 
-                                }} 
-                            />
+                        {title === 'spot' && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                <ReactPlayer
+                                    ref={playerRef}
+                                    // url={test_video}
+                                    controls
+                                    width="0%"
+                                    height="auto"
+                                    muted={true}
+                                />
+                                {imageSrc && (
+                                    <img 
+                                        src={imageSrc} 
+                                        alt="Processed frame" 
+                                        style={{ 
+                                            width: '48%', 
+                                            height: 'auto', 
+                                            display: 'block', 
+                                            margin: '0 auto' 
+                                        }} 
+                                    />
+                                )}
+                            </div>
                         )}
                         {/* {Array.isArray(boundingBoxes) &&
                             boundingBoxes.map((detail, index) => (

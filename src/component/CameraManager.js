@@ -25,10 +25,19 @@ const CameraManager = () => {
                     },
                     body: JSON.stringify({ token: localStorage.getItem('access_token') }),
                 });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
-                setCameraTasks(data);
+                if (Array.isArray(data)) {
+                    setCameraTasks(data);
+                } else {
+                    console.error('Unexpected response data format:', data);
+                    setCameraTasks([]);
+                }
             } catch (error) {
                 console.error('Error fetching image tasks:', error);
+                setCameraTasks([]);
             }
         };
 
@@ -51,6 +60,11 @@ const CameraManager = () => {
     }, []);
 
     useEffect(() => {
+        if (!Array.isArray(cameraTasks)) {
+            console.error('cameraTasks is not an array:', cameraTasks);
+            return;
+        }
+
         const remoteIpTasks = cameraTasks.filter(task => task.camera_type === 'remoteIP');
         const liveStreamTasks = cameraTasks.filter(task => task.camera_type === 'liveStream');
         const localVideoTasks = cameraTasks.filter(task => task.camera_type === 'localVideo');
@@ -172,6 +186,9 @@ const CameraManager = () => {
             console.log('Webcam Image Source:', imageSrc);
     
             const response = await fetch(imageSrc);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             const imageBlob = await response.blob();
     
             stream.getTracks().forEach(track => track.stop()); // Stop the stream to release resources

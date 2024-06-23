@@ -24,9 +24,9 @@ const CreateLotPage = () => {
     weekendClosing: null,
     address: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Load form data from localStorage on component mount
     const savedFormData = JSON.parse(localStorage.getItem('formData'));
     if (savedFormData) {
       setFormData(savedFormData);
@@ -34,7 +34,6 @@ const CreateLotPage = () => {
   }, []);
 
   const saveFormDataToLocalStorage = (data) => {
-    // Save form data to localStorage
     localStorage.setItem('formData', JSON.stringify(data));
   };
 
@@ -47,9 +46,10 @@ const CreateLotPage = () => {
   };
 
   const handleSubmit = async () => {
-    // Handle form submission logic here
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     try {
-      // Construct the JSON payload with the form data
       const payload = {
         token: localStorage.getItem("access_token"),
         price: parseFloat(formData.price),
@@ -63,7 +63,6 @@ const CreateLotPage = () => {
         street_address: formData.address,
       };
       console.log(payload)
-      // Send a POST request to the server
       const response = await fetch('http://127.0.0.1:8000/parking/user-parking/', {
         method: 'POST',
         headers: {
@@ -71,11 +70,10 @@ const CreateLotPage = () => {
         },
         body: JSON.stringify(payload),
       });
-  
-      // Check if the request was successful (status code 2xx)
+
       if (response.ok) {
         alert('Form submitted successfully!');
-        // Optionally, you can clear the form data and localStorage after submission
+
         setFormData({
           capacity: '',
           price: '',
@@ -85,13 +83,14 @@ const CreateLotPage = () => {
         localStorage.removeItem('formData');
         navigate("/account");
       } else {
-        // Handle the case where the server returns an error
         const errorData = await response.json();
         alert(`Form submission failed: ${errorData.message}`);
+        setIsSubmitting(false)
       }
     } catch (error) {
       console.error('Error submitting form:', error);
       alert('An error occurred while submitting the form. Please try again.');
+      setIsSubmitting(false)
     }
   };
 
@@ -99,7 +98,7 @@ const CreateLotPage = () => {
     const { name, value } = e.target;
     const newFormData = { ...formData, [name]: value };
     setFormData(newFormData);
-    // Save form data to localStorage on each input change
+
     saveFormDataToLocalStorage(newFormData);
   };
 
@@ -159,8 +158,8 @@ const CreateLotPage = () => {
           position: 'relative',
           background: 'snow',
           padding: '40px',
-          marginTop: '45px',
-          marginBottom: '45px',
+          marginTop: '200px',
+          marginBottom: '200px',
           width: '100%',
           '@media (min-width: 600px)': {
             width: '70%',
@@ -168,7 +167,7 @@ const CreateLotPage = () => {
           height: boxHeight,
           border: '2px solid black',
           borderRadius: '25px',
-          boxSizing: 'border-box', // Add this to include padding in width calculation
+          boxSizing: 'border-box',
         }}
       >
         <ProgressBar percent={(activeStep / (steps.length - 1)) * 100} filledBackground="#4caf50" />

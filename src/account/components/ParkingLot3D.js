@@ -114,6 +114,7 @@ const ParkingLot3D = ({ selectedAddress }) => {
     setSocket(newSocket);
   
     newSocket.onmessage = (event) => {
+      console.log('received', event.data)
       const data = JSON.parse(event.data);
       if (data.street_address === selectedAddress) {
         const updatedTiles = { ...tiles };

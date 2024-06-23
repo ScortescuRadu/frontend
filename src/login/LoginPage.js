@@ -55,7 +55,7 @@ const Login = () => {
             console.log(localStorage.getItem("access_token"));
 
             // Redirect to home page using React Router
-            navigate("/");
+            navigate("/account");
         } catch (error) {
             console.error("Login failed:", error);
             setError("Invalid credentials. Please try again.");

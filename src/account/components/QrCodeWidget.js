@@ -40,7 +40,7 @@ const QrCodeWidget = ({ selectedAddress }) => {
         }}>
             <CardContent sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography sx={{ fontSize: 18, fontWeight: 'medium' }}>
-                    Easy Payment
+                    Easy Access
                 </Typography>
                 <IconButton onClick={handlePrint}>
                     <PrintIcon />

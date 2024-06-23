@@ -194,7 +194,7 @@ const ParkingLotInfo = ({ selectedAddress }) => {
 
     return (
        <div style={{ padding: '20px', backgroundColor: '#62728c' }}>
-        {selectedAddress !== null ? (
+        {selectedAddress !== null && selectedAddress !== '' ? (
             <>
             <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={4}>
                 <CityCardWidget cityName={userData.cityName}/>
